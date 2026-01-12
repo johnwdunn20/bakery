@@ -16,9 +16,11 @@ convex/_generated
 .env
 .env.*
 !.env.example
+!**/.env.example
 
 # TypeScript
 *.tsbuildinfo
+next-env.d.ts
 
 # Logs
 *.log
@@ -60,3 +62,6 @@ web-build
 .cache
 .temp
 *.local
+
+# Vercel
+.vercel

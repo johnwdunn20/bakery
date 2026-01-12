@@ -1,0 +1,21 @@
+{
+  "name": "bakery",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "convex:dev": "pnpm --filter=@bakery/backend exec convex dev",
+    "convex:deploy": "pnpm --filter=@bakery/backend exec convex deploy"
+  },
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "prettier": "^3.7.4",
+    "turbo": "^2.7.4",
+    "typescript": "^5.9.3"
+  }
+}
