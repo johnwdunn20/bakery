@@ -12,15 +12,14 @@ import { useEffect } from "react";
 export function useCurrentUser() {
   const { isSignedIn, isLoaded } = useAuth();
   const user = useQuery(api.users.getCurrentUser);
-  const getOrCreateUser = useMutation(api.users.getOrCreateUser);
+  const syncUser = useMutation(api.users.syncUser);
 
   useEffect(() => {
-    // Wait for Clerk to load and confirm user is signed in
-    // Sync to Convex if user doesn't exist in database yet
+    // Sync user to Convex when signed in but not yet in database
     if (isLoaded && isSignedIn && user === null) {
-      getOrCreateUser();
+      syncUser();
     }
-  }, [isLoaded, isSignedIn, user, getOrCreateUser]);
+  }, [isLoaded, isSignedIn, user, syncUser]);
 
   return {
     user,
