@@ -62,3 +62,8 @@ globs: **/*
 - `NEXT_PUBLIC_CONVEX_URL` - Convex deployment URL
 - Never commit `.env.local` files
 - Use `.env.example` as a template
+
+# Application Purpose
+
+- The app is for at-home bakers to store recipes
+- The web version should be mobile friendly
