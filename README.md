@@ -14,6 +14,23 @@ A professional-grade recipe management and experimentation platform for at-home 
 
 ### For Registered Bakers
 
+- **Elisabeth MVP**
+  - Store a type of baked good and allow for multiple recipes/bakes under that
+  - Rating system (both internal and from others)
+    - Upload photos of final result
+  - Difficulty Rating
+  - Link to a recipe website
+  - Free form notes on the recipe side and the result side
+  - Allow historical adds (backdating)
+- **Post MVP**
+  - Upload a recipe from a website or a photo -> put into UI
+    - V2 is pulling out ingredients into our own tables
+  - Categorize (tag?). Also want to be able to favorite
+  - Pantry shopping list that pulls from recipes
+  - Track sourdough / sourdough starter
+  - Historical view
+    - Feed
+    - Calendar
 - **Recipe Experimentation (Variants):**
   - Store recipes with unlimited **Variants**. Track small tweaks (e.g., +5g salt) and see how they evolve over time.
   - All variants are dated and support photo uploads for visual tracking.

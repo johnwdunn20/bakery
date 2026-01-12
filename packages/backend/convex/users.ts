@@ -114,6 +114,28 @@ export const syncUser = mutation({
   },
 });
 
+export const getOrCreateSystemUser = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const systemUser = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", "bakery_system"))
+      .unique();
+
+    if (systemUser) return systemUser._id;
+
+    const now = Date.now();
+    return await ctx.db.insert("users", {
+      clerkId: "system",
+      email: "system@bakery.app",
+      username: "bakery_system",
+      name: "Bakery System",
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
 /**
  * Get the current authenticated user from the database.
  * Returns null if not authenticated or user doesn't exist in database.

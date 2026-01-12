@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as recipes from "../recipes.js";
+import type * as seed from "../seed.js";
 import type * as users from "../users.js";
 
 import type {
@@ -17,6 +19,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  recipes: typeof recipes;
+  seed: typeof seed;
   users: typeof users;
 }>;
 

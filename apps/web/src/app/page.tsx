@@ -1,3 +1,7 @@
+"use client";
+
+import { useQuery } from "convex/react";
+import { api } from "@bakery/backend";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,172 +11,225 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { BakersMathCalculator } from "@/components/bakers-math-calculator";
+import { SubstitutionSearch } from "@/components/substitution-search";
+import { ChefHat, Microscope, Share2, Smartphone, ArrowRight, Star } from "lucide-react";
+import Image from "next/image";
 
 export default function Home() {
+  const communityRecipes = useQuery(api.recipes.listCommunityRecipes);
+
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
       {/* Hero Section */}
-      <section className="py-20 px-6 text-center">
-        <h1 className="text-5xl font-bold text-foreground mb-4">Welcome to Sweet Delights</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Freshly baked goods made with love. From artisan breads to decadent pastries, we bring
-          warmth to every bite.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button size="lg">Order Now</Button>
-          <Button variant="outline" size="lg">
-            View Menu
+      <section className="relative pt-24 pb-20 px-6 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10 opacity-20 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary rounded-full blur-[120px]" />
+        </div>
+        
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium animate-in fade-in slide-in-from-bottom-3 duration-1000">
+            <Microscope className="h-4 w-4" />
+            <span>Master the Science of Baking</span>
+          </div>
+          
+          <h1 className="text-6xl md:text-7xl font-extrabold text-foreground tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150">
+            Stop Guessing. <br />
+            <span className="text-primary italic">Start Perfecting.</span>
+          </h1>
+          
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-300">
+            The professional-grade toolkit for home bakers. Store your recipes, 
+            track variations with precision, and master the math behind every loaf.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-500">
+            <Button size="lg" className="h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/20">
+              Start Your Baking Journal <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button variant="outline" size="lg" className="h-14 px-8 text-lg rounded-full">
+              Explore Community Bakes
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Grid */}
+      <section className="py-20 px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+              <Share2 className="h-6 w-6" />
+            </div>
+            <h3 className="text-2xl font-bold mb-3">Infinite Variants</h3>
+            <p className="text-muted-foreground">
+              Track small tweaks like hydration or salt % across versions. See exactly how your bakes evolve over time.
+            </p>
+          </div>
+          <div className="p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+              <Microscope className="h-6 w-6" />
+            </div>
+            <h3 className="text-2xl font-bold mb-3">Baker's Percentages</h3>
+            <p className="text-muted-foreground">
+              No more manual math. Scale recipes instantly and understand ratios like a pro boulanger.
+            </p>
+          </div>
+          <div className="p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+              <Smartphone className="h-6 w-6" />
+            </div>
+            <h3 className="text-2xl font-bold mb-3">Distraction-Free</h3>
+            <p className="text-muted-foreground">
+              Bake Mode keeps your screen awake and focused on the steps. Clean, interactive, and mobile-friendly.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Tools Section */}
+      <section className="py-24 px-6 bg-muted/30 border-y border-border">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          <div className="space-y-12">
+            <div className="space-y-4">
+              <h2 className="text-4xl font-bold tracking-tight">Try the Tools.</h2>
+              <p className="text-xl text-muted-foreground max-w-md">
+                Get a taste of the precision Bakery provides. These tools are live and ready to help your next bake.
+              </p>
+            </div>
+            <SubstitutionSearch />
+          </div>
+          <div className="lg:pt-20">
+            <BakersMathCalculator />
+          </div>
+        </div>
+      </section>
+
+      {/* Community Showcase */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-16 space-y-4">
+          <h2 className="text-4xl font-bold tracking-tight">Community Top Bakes</h2>
+          <p className="text-xl text-muted-foreground">Recipes shared by bakers like you. Fork them to start your own experiments.</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {communityRecipes?.map((recipe) => (
+            <Card key={recipe._id} className="overflow-hidden border-border group hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5">
+              <div className="h-64 relative bg-muted overflow-hidden">
+                {recipe.imageUrl ? (
+                  <Image 
+                    src={recipe.imageUrl} 
+                    alt={recipe.name} 
+                    fill 
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-4xl">🍞</div>
+                )}
+                <div className="absolute top-4 right-4 bg-background/80 backdrop-blur px-2 py-1 rounded-md flex items-center gap-1 text-sm font-bold">
+                  <Star className="h-3 w-3 fill-primary text-primary" /> 4.9
+                </div>
+              </div>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl font-bold mb-1">{recipe.name}</CardTitle>
+                    <CardDescription className="line-clamp-2">{recipe.description}</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardFooter className="flex justify-between items-center border-t border-border pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">
+                    {recipe.authorName.charAt(0)}
+                  </div>
+                  <span className="text-sm font-medium">{recipe.authorName}</span>
+                </div>
+                <Button variant="ghost" size="sm" className="group/btn">
+                  Fork <ChefHat className="ml-2 h-4 w-4 group-hover/btn:rotate-12 transition-transform" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+          {!communityRecipes && (
+            [1, 2, 3].map((i) => (
+              <div key={i} className="h-[400px] rounded-2xl bg-muted animate-pulse" />
+            ))
+          )}
+        </div>
+        
+        <div className="mt-16 text-center">
+          <Button variant="outline" size="lg" className="rounded-full px-8">
+            View All Community Recipes
           </Button>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-16 px-6 bg-muted/50">
-        <h2 className="text-3xl font-semibold text-foreground text-center mb-10">
-          Today&apos;s Specials
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Croissants</CardTitle>
-              <CardDescription>Buttery, flaky perfection</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-32 bg-accent rounded-md flex items-center justify-center text-accent-foreground">
-                🥐
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                Our signature croissants are made fresh every morning with imported French butter.
-              </p>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-primary">$4.50</span>
-              <Button size="sm">Add to Cart</Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Sourdough Loaf</CardTitle>
-              <CardDescription>24-hour fermented</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-32 bg-secondary rounded-md flex items-center justify-center text-secondary-foreground">
-                🍞
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                Crusty exterior, soft interior. Made with our 50-year-old starter.
-              </p>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-primary">$8.00</span>
-              <Button size="sm">Add to Cart</Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Pink Macarons</CardTitle>
-              <CardDescription>Rose & raspberry</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-32 bg-primary/20 rounded-md flex items-center justify-center">
-                🧁
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                Delicate French macarons with a rose-raspberry ganache filling.
-              </p>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-primary">$3.00</span>
-              <Button size="sm">Add to Cart</Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </section>
-
-      {/* Button Variants Showcase */}
-      <section className="py-16 px-6">
-        <h2 className="text-3xl font-semibold text-foreground text-center mb-10">Button Styles</h2>
-        <div className="flex flex-wrap gap-4 justify-center max-w-3xl mx-auto">
-          <Button>Primary</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="link">Link</Button>
-          <Button variant="destructive">Destructive</Button>
-        </div>
-      </section>
-
-      {/* Newsletter Signup */}
-      <section className="py-16 px-6 bg-card">
-        <Card className="max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Join Our Mailing List</CardTitle>
-            <CardDescription>Get notified about new treats and exclusive offers!</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Your name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your@email.com" />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full">Subscribe</Button>
-          </CardFooter>
-        </Card>
-      </section>
-
-      {/* Color Palette Preview */}
-      <section className="py-16 px-6 bg-muted/30">
-        <h2 className="text-3xl font-semibold text-foreground text-center mb-10">Theme Colors</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-primary rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Primary</p>
+      {/* Bake Mode Preview */}
+      <section className="py-24 px-6 bg-primary text-primary-foreground overflow-hidden">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="space-y-8">
+            <h2 className="text-5xl font-bold leading-tight">Focus on the Dough, Not the Screen.</h2>
+            <p className="text-xl text-primary-foreground/80 leading-relaxed">
+              Our signature **Bake Mode** is designed for the flour-covered hands. 
+              High-contrast, interactive steps, and a screen that never sleeps while you're working.
+            </p>
+            <ul className="space-y-4">
+              {["Built-in timers", "Interactive step tracking", "Recipe scaling on the fly"].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-lg font-medium">
+                  <div className="h-6 w-6 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                    <Star className="h-3 w-3 fill-primary-foreground" />
+                  </div>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Button size="lg" variant="secondary" className="h-14 px-8 text-lg rounded-full">
+              Join to try Bake Mode
+            </Button>
           </div>
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-secondary rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Secondary</p>
-          </div>
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-accent rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Accent</p>
-          </div>
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-muted rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Muted</p>
-          </div>
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-card border border-border rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Card</p>
-          </div>
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-background border border-border rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Background</p>
-          </div>
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-foreground rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Foreground</p>
-          </div>
-          <div className="space-y-2 text-center">
-            <div className="h-20 bg-destructive rounded-lg"></div>
-            <p className="text-sm text-muted-foreground">Destructive</p>
+          <div className="relative">
+             <div className="bg-background rounded-[40px] border-8 border-primary-foreground/10 p-4 shadow-2xl overflow-hidden aspect-9/16 max-w-[320px] mx-auto transform lg:rotate-6">
+                <div className="space-y-6 pt-8 px-4">
+                   <div className="h-2 w-24 bg-muted rounded-full mx-auto mb-8" />
+                   <div className="space-y-2">
+                      <div className="h-4 w-3/4 bg-primary/20 rounded" />
+                      <div className="h-8 w-full bg-primary/10 rounded" />
+                   </div>
+                   <div className="space-y-4 pt-4">
+                      {[1, 2, 3].map(i => (
+                         <div key={i} className="flex gap-3 items-center p-4 rounded-xl border border-primary/10">
+                            <div className="h-6 w-6 rounded border border-primary/20" />
+                            <div className="space-y-2 flex-1">
+                               <div className="h-3 w-full bg-muted rounded" />
+                               <div className="h-3 w-2/3 bg-muted rounded" />
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+                </div>
+             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-border text-center">
-        <p className="text-muted-foreground">
-          © 2026 Sweet Delights Bakery. Made with love and flour.
-        </p>
+      <footer className="py-12 px-6 border-t border-border bg-card">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-2 font-bold text-2xl">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground text-sm">B</div>
+            Bakery
+          </div>
+          <p className="text-muted-foreground">
+            © 2026 Bakery App. The science of baking, simplified.
+          </p>
+          <div className="flex gap-6">
+            <Button variant="link" className="text-muted-foreground">Terms</Button>
+            <Button variant="link" className="text-muted-foreground">Privacy</Button>
+            <Button variant="link" className="text-muted-foreground">Contact</Button>
+          </div>
+        </div>
       </footer>
     </div>
   );
