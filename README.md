@@ -6,6 +6,7 @@ A modern full-stack monorepo built with Next.js, Convex, and Tailwind CSS. Desig
 
 - **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS, Shadcn UI
 - **Backend**: Convex (real-time database & serverless functions)
+- **Authentication**: Clerk (user management & auth)
 - **Tooling**: pnpm workspaces, Turborepo, TypeScript, Prettier, ESLint
 - **Future**: Expo (React Native) mobile app ready
 
@@ -78,6 +79,63 @@ Example:
 ```bash
 pnpm dlx shadcn@latest add dialog dropdown-menu toast
 ```
+
+## Authentication
+
+This project uses [Clerk](https://clerk.com/) for authentication, integrated with Convex for user data storage.
+
+### How It Works
+
+We use an **on-demand sync** approach:
+
+1. User authenticates via Clerk (sign in/sign up)
+2. Clerk provides a JWT token to the app
+3. When the user accesses Convex, call `getOrCreateUser` to sync their data
+4. User info is stored/updated in the Convex `users` table
+
+This approach is simpler than webhooks and works well for most applications. User data syncs whenever they're active in the app.
+
+### Syncing User Data
+
+Call `getOrCreateUser` when you need to ensure the user exists in Convex:
+
+```tsx
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@bakery/backend";
+import { useEffect } from "react";
+
+export function useCurrentUser() {
+  const user = useQuery(api.users.getCurrentUser);
+  const getOrCreateUser = useMutation(api.users.getOrCreateUser);
+
+  useEffect(() => {
+    // Sync user on first load if authenticated
+    if (user === null) {
+      getOrCreateUser();
+    }
+  }, [user, getOrCreateUser]);
+
+  return user;
+}
+```
+
+### Environment Variables
+
+**For `apps/web/.env.local`:**
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key
+- `CLERK_SECRET_KEY` - Clerk secret key
+- `CLERK_JWT_ISSUER_DOMAIN` - Clerk issuer URL (e.g., `https://your-instance.clerk.accounts.dev`)
+
+**For Convex Dashboard (Settings > Environment Variables):**
+
+- `CLERK_JWT_ISSUER_DOMAIN` - Same issuer URL as above
+
+### Future: Webhook Sync
+
+For real-time sync even when users aren't active (e.g., admin updates, immediate deletion cleanup), you can implement Clerk webhooks. See [Clerk's webhook documentation](https://clerk.com/docs/integrations/webhooks) for details.
 
 ## Convex Development
 
@@ -201,10 +259,8 @@ pnpm convex:deploy
 ## Next Steps
 
 - [ ] Run `pnpm convex:dev` to initialize Convex
-- [ ] Define your database schema in `packages/backend/convex/schema.ts`
-- [ ] Create your first Convex functions
+- [ ] Set environment variables (see Authentication section)
 - [ ] Build out the web app UI with Shadcn components
-- [ ] Add authentication when ready (Clerk integrates well with Convex)
 - [ ] Set up the Expo mobile app in `apps/mobile/`
 
 ## Learn More
