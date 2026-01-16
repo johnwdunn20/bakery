@@ -22,6 +22,7 @@ A professional-grade recipe management and experimentation platform for at-home 
   - Link to a recipe website
   - Free form notes on the recipe side and the result side
   - Allow historical adds (backdating)
+  - Make dark mode more welcoming (lighter brown?)
 - **Post MVP**
   - Upload a recipe from a website or a photo -> put into UI
     - V2 is pulling out ingredients into our own tables
