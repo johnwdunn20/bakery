@@ -51,6 +51,47 @@ export const addIngredient = mutation({
   },
 });
 
+export const listMyRecipes = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) return [];
+
+    const recipes = await ctx.db
+      .query("recipes")
+      .withIndex("by_author", (q) => q.eq("authorId", user._id))
+      .collect();
+
+    return await Promise.all(
+      recipes.map(async (recipe) => {
+        const variants = await ctx.db
+          .query("variants")
+          .withIndex("by_recipe", (q) => q.eq("recipeId", recipe._id))
+          .collect();
+
+        const firstVariant = variants[0];
+        let imageUrl = null;
+        if (firstVariant?.imageStorageId) {
+          imageUrl = await ctx.storage.getUrl(firstVariant.imageStorageId);
+        }
+
+        return {
+          ...recipe,
+          variantCount: variants.length,
+          imageUrl,
+        };
+      })
+    );
+  },
+});
+
 export const listCommunityRecipes = query({
   args: {},
   handler: async (ctx) => {
