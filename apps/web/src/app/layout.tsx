@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import {
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
 import "./globals.css";
 import { Providers } from "./providers";
 import { UserSync } from "@/components/user-sync";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Bakery",
-  description: "Bakery application",
+  description: "Your personal baking journal - store recipes, track variations, and master the science of baking.",
 };
 
 export default function RootLayout({
@@ -36,17 +28,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
-          <header className="flex items-center justify-end gap-4 p-4 border-b">
-            <ThemeToggle />
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton />
-            </SignedOut>
-            <SignedIn>
-              <UserSync />
-              <UserButton />
-            </SignedIn>
-          </header>
+          <UserSync />
           {children}
         </Providers>
       </body>
