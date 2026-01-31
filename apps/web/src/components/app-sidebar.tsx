@@ -41,7 +41,7 @@ import { useCurrentUser } from "@/hooks";
 
 export function AppSidebar() {
   const { user, isLoading: userLoading } = useCurrentUser();
-  const recipes = useQuery(api.recipes.listMyRecipes);
+  const bakedGoods = useQuery(api.bakedGoods.listMyBakedGoods);
   const { signOut } = useClerk();
 
   const displayName = user?.name || user?.username || "Baker";
@@ -75,39 +75,36 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* My Recipes Section */}
+        {/* My Baked Goods Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>My Recipes</SidebarGroupLabel>
+          <SidebarGroupLabel>My Baked Goods</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {recipes === undefined ? (
-                // Loading state
+              {bakedGoods === undefined ? (
                 <>
                   <SidebarMenuSkeleton showIcon />
                   <SidebarMenuSkeleton showIcon />
                   <SidebarMenuSkeleton showIcon />
                 </>
-              ) : recipes.length === 0 ? (
-                // Empty state
+              ) : bakedGoods.length === 0 ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <a
-                      href="/recipes/new"
+                      href="/baked-goods/new"
                       className="text-muted-foreground italic"
                     >
                       <Plus className="size-4" />
-                      <span>Create your first recipe</span>
+                      <span>Create your first baked good</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : (
-                // Recipe list
-                recipes.map((recipe) => (
-                  <SidebarMenuItem key={recipe._id}>
-                    <SidebarMenuButton asChild tooltip={recipe.name}>
-                      <a href={`/recipes/${recipe._id}`}>
+                bakedGoods.map((bg) => (
+                  <SidebarMenuItem key={bg._id}>
+                    <SidebarMenuButton asChild tooltip={bg.name}>
+                      <a href={`/baked-goods/${bg._id}`}>
                         <span className="text-lg">🍞</span>
-                        <span>{recipe.name}</span>
+                        <span>{bg.name}</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -117,17 +114,17 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* New Recipe Button */}
+        {/* New Baked Good Button */}
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <a
-                  href="/recipes/new"
+                  href="/baked-goods/new"
                   className="bg-primary/10 hover:bg-primary/20 text-primary"
                 >
                   <Plus className="size-4" />
-                  <span>New Recipe</span>
+                  <span>New Baked Good</span>
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>

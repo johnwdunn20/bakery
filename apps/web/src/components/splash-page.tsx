@@ -20,7 +20,6 @@ import {
   ArrowRight,
   Star,
 } from "lucide-react";
-import Image from "next/image";
 import {
   SignInButton,
   SignUpButton,
@@ -33,7 +32,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SplashPage() {
-  const communityRecipes = useQuery(api.recipes.listCommunityRecipes);
+  const communityBakedGoods = useQuery(api.bakedGoods.listCommunityBakedGoods);
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
@@ -191,36 +190,24 @@ export function SplashPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {communityRecipes?.map((recipe) => (
+          {communityBakedGoods?.map((bg) => (
             <Card
-              key={recipe._id}
+              key={bg._id}
               className="overflow-hidden border-border group hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5"
             >
               <div className="h-64 relative bg-muted overflow-hidden">
-                {recipe.imageUrl ? (
-                  <Image
-                    src={recipe.imageUrl}
-                    alt={recipe.name}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-4xl">
-                    🍞
-                  </div>
-                )}
-                <div className="absolute top-4 right-4 bg-background/80 backdrop-blur px-2 py-1 rounded-md flex items-center gap-1 text-sm font-bold">
-                  <Star className="h-3 w-3 fill-primary text-primary" /> 4.9
+                <div className="w-full h-full flex items-center justify-center text-4xl">
+                  🍞
                 </div>
               </div>
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-xl font-bold mb-1">
-                      {recipe.name}
+                      {bg.name}
                     </CardTitle>
                     <CardDescription className="line-clamp-2">
-                      {recipe.description}
+                      {bg.description ?? ""}
                     </CardDescription>
                   </div>
                 </div>
@@ -228,10 +215,10 @@ export function SplashPage() {
               <CardFooter className="flex justify-between items-center border-t border-border pt-4">
                 <div className="flex items-center gap-2">
                   <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">
-                    {recipe.authorName.charAt(0)}
+                    {bg.authorName.charAt(0)}
                   </div>
                   <span className="text-sm font-medium">
-                    {recipe.authorName}
+                    {bg.authorName}
                   </span>
                 </div>
                 <Button variant="ghost" size="sm" className="group/btn">
@@ -241,7 +228,7 @@ export function SplashPage() {
               </CardFooter>
             </Card>
           ))}
-          {!communityRecipes &&
+          {!communityBakedGoods &&
             [1, 2, 3].map((i) => (
               <div key={i} className="h-[400px] rounded-2xl bg-muted animate-pulse" />
             ))}
@@ -249,7 +236,7 @@ export function SplashPage() {
 
         <div className="mt-16 text-center">
           <Button variant="outline" size="lg" className="rounded-full px-8">
-            View All Community Recipes
+            View All Community Bakes
           </Button>
         </div>
       </section>
