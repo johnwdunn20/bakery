@@ -1,4 +1,5 @@
-import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+import { mutation, query, internalMutation } from "./_generated/server";
 
 /**
  * Sync the authenticated user from Clerk to Convex.
@@ -111,6 +112,35 @@ export const syncUser = mutation({
     });
 
     return userId;
+  },
+});
+
+/**
+ * Get or create a seed user (for seed action only). Call via internal.users.getOrCreateSeedUser.
+ * Idempotent: returns existing user id if username already exists.
+ */
+export const getOrCreateSeedUser = internalMutation({
+  args: {
+    clerkId: v.string(),
+    email: v.string(),
+    username: v.string(),
+    name: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .unique();
+    if (existing) return existing._id;
+    const now = Date.now();
+    return await ctx.db.insert("users", {
+      clerkId: args.clerkId,
+      email: args.email,
+      username: args.username,
+      name: args.name,
+      createdAt: now,
+      updatedAt: now,
+    });
   },
 });
 
