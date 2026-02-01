@@ -115,26 +115,31 @@ export default function BakedGoodDetailPage() {
             <ul className="space-y-3">
               {iterations.map((it) => (
                 <li key={it._id}>
-                  <Card className="border bg-card">
-                    <CardContent className="p-4">
-                      <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <span className="font-medium">{formatDate(it.bakeDate)}</span>
-                        {it.rating != null && (
-                          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
-                            {it.rating}/5
+                  <Link
+                    href={`/baked-goods/${id}/iterations/${it._id}`}
+                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+                  >
+                    <Card className="border bg-card transition-colors hover:bg-accent/50">
+                      <CardContent className="p-4">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <span className="font-medium">{formatDate(it.bakeDate)}</span>
+                          {it.rating != null && (
+                            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
+                              {it.rating}/5
+                            </span>
+                          )}
+                          <span className="text-muted-foreground">
+                            {it.difficulty} · {formatMinutes(it.totalTime)}
                           </span>
+                        </div>
+                        {(it.recipeContent || it.notes) && (
+                          <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                            {it.notes?.trim() || it.recipeContent?.trim().split("\n")[0] || ""}
+                          </p>
                         )}
-                        <span className="text-muted-foreground">
-                          {it.difficulty} · {formatMinutes(it.totalTime)}
-                        </span>
-                      </div>
-                      {(it.recipeContent || it.notes) && (
-                        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                          {it.notes?.trim() || it.recipeContent?.trim().split("\n")[0] || ""}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </li>
               ))}
             </ul>

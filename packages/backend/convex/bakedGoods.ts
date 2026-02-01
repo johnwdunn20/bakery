@@ -150,6 +150,37 @@ export const getBakedGoodWithIterations = query({
   },
 });
 
+export const getIteration = query({
+  args: { id: v.id("recipeIterations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) return null;
+
+    const iteration = await ctx.db.get(args.id);
+    if (!iteration) return null;
+
+    const bakedGood = await ctx.db.get(iteration.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) return null;
+
+    const photos = await ctx.db
+      .query("iterationPhotos")
+      .withIndex("by_iteration", (q) => q.eq("iterationId", args.id))
+      .collect();
+    photos.sort((a, b) => a.order - b.order);
+
+    return {
+      ...iteration,
+      photos: photos.map((p) => ({ _id: p._id, storageId: p.storageId, order: p.order })),
+    };
+  },
+});
+
 export const createIteration = mutation({
   args: {
     bakedGoodId: v.id("bakedGoods"),
