@@ -123,12 +123,133 @@ export const getBakedGoodWithIterations = query({
     const bakedGood = await ctx.db.get(args.id);
     if (!bakedGood) return null;
 
-    const iterations = await ctx.db
+    const rawIterations = await ctx.db
       .query("recipeIterations")
       .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.id))
       .collect();
 
-    return { ...bakedGood, iterations };
+    const iterations = rawIterations.sort((a, b) => b.bakeDate - a.bakeDate);
+
+    const ratings = iterations
+      .map((i) => i.rating)
+      .filter((r): r is number => r != null);
+    const iterationCount = iterations.length;
+    const avgRating =
+      ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : null;
+    const bestRating = ratings.length > 0 ? Math.max(...ratings) : null;
+    const lastBakedDate = iterations.length > 0 ? Math.max(...iterations.map((i) => i.bakeDate)) : null;
+
+    return {
+      ...bakedGood,
+      iterations,
+      iterationCount,
+      avgRating,
+      bestRating,
+      lastBakedDate,
+    };
+  },
+});
+
+export const createIteration = mutation({
+  args: {
+    bakedGoodId: v.id("bakedGoods"),
+    recipeContent: v.string(),
+    difficulty: v.string(),
+    totalTime: v.number(),
+    bakeDate: v.number(),
+    rating: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    sourceUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const bakedGood = await ctx.db.get(args.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Baked good not found or not owned by you");
+    }
+
+    const now = Date.now();
+    return await ctx.db.insert("recipeIterations", {
+      bakedGoodId: args.bakedGoodId,
+      recipeContent: args.recipeContent,
+      difficulty: args.difficulty,
+      totalTime: args.totalTime,
+      bakeDate: args.bakeDate,
+      rating: args.rating,
+      notes: args.notes,
+      sourceUrl: args.sourceUrl,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const updateIteration = mutation({
+  args: {
+    id: v.id("recipeIterations"),
+    recipeContent: v.optional(v.string()),
+    difficulty: v.optional(v.string()),
+    totalTime: v.optional(v.number()),
+    bakeDate: v.optional(v.number()),
+    rating: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    sourceUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+    const iteration = await ctx.db.get(args.id);
+    if (!iteration) throw new Error("Iteration not found");
+    const bakedGood = await ctx.db.get(iteration.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Iteration not found or not owned by you");
+    }
+    const now = Date.now();
+    await ctx.db.patch(args.id, {
+      ...(args.recipeContent !== undefined && { recipeContent: args.recipeContent }),
+      ...(args.difficulty !== undefined && { difficulty: args.difficulty }),
+      ...(args.totalTime !== undefined && { totalTime: args.totalTime }),
+      ...(args.bakeDate !== undefined && { bakeDate: args.bakeDate }),
+      ...(args.rating !== undefined && { rating: args.rating }),
+      ...(args.notes !== undefined && { notes: args.notes }),
+      ...(args.sourceUrl !== undefined && { sourceUrl: args.sourceUrl }),
+      updatedAt: now,
+    });
+    return args.id;
+  },
+});
+
+export const deleteIteration = mutation({
+  args: { id: v.id("recipeIterations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+    const iteration = await ctx.db.get(args.id);
+    if (!iteration) throw new Error("Iteration not found");
+    const bakedGood = await ctx.db.get(iteration.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Iteration not found or not owned by you");
+    }
+    await ctx.db.delete(args.id);
+    return args.id;
   },
 });
 
