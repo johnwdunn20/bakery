@@ -12,6 +12,17 @@ import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, Copy, Pencil, Trash2 } from "lucide-react";
 
 function formatDate(ts: number) {
@@ -72,9 +83,13 @@ export default function IterationViewPage() {
   const id = params.id as string;
   const iterationId = params.iterationId as string;
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
+  const deleteIteration = useMutation(api.bakedGoods.deleteIteration);
   const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
   const iteration = useQuery(
     api.bakedGoods.getIteration,
@@ -122,39 +137,96 @@ export default function IterationViewPage() {
           </Link>
         </Button>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={isDuplicating}
-            onClick={async () => {
-              setDuplicateError(null);
-              setIsDuplicating(true);
-              try {
-                const newId = await duplicateIteration({
-                  id: iterationId as Id<"recipeIterations">,
-                });
-                router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
-              } catch (err) {
-                setDuplicateError(
-                  err instanceof Error ? err.message : "Failed to duplicate."
-                );
-                setIsDuplicating(false);
-              }
-            }}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            {isDuplicating ? "Duplicating…" : "Duplicate"}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="outline" disabled={isDuplicating}>
+                <Copy className="mr-2 h-4 w-4" />
+                {isDuplicating ? "Duplicating…" : "Duplicate"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will create a new iteration with today's date, copying the recipe content, difficulty, and time. You can edit it before saving.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    setDuplicateError(null);
+                    setIsDuplicating(true);
+                    try {
+                      const newId = await duplicateIteration({
+                        id: iterationId as Id<"recipeIterations">,
+                      });
+                      router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+                    } catch (err) {
+                      setDuplicateError(
+                        err instanceof Error ? err.message : "Failed to duplicate."
+                      );
+                      setIsDuplicating(false);
+                    }
+                  }}
+                >
+                  Duplicate
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button size="sm" asChild>
             <Link href={`/baked-goods/${id}/iterations/${iterationId}/edit`}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </Link>
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="destructive" disabled={isDeleting}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {isDeleting ? "Deleting…" : "Delete"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete iteration?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete this bake iteration. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    setDeleteError(null);
+                    setIsDeleting(true);
+                    try {
+                      await deleteIteration({
+                        id: iterationId as Id<"recipeIterations">,
+                      });
+                      router.push(`/baked-goods/${id}`);
+                    } catch (err) {
+                      setDeleteError(
+                        err instanceof Error ? err.message : "Failed to delete."
+                      );
+                      setIsDeleting(false);
+                    }
+                  }}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
       {duplicateError && (
         <p className="text-sm text-destructive">{duplicateError}</p>
+      )}
+      {deleteError && (
+        <p className="text-sm text-destructive">{deleteError}</p>
       )}
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -210,14 +282,7 @@ export default function IterationViewPage() {
                     className="absolute top-2 right-2 h-8 w-8 opacity-90 hover:opacity-100"
                     disabled={deletingPhotoId !== null}
                     aria-label="Remove photo"
-                    onClick={async () => {
-                      setDeletingPhotoId(photo._id);
-                      try {
-                        await deleteIterationPhoto({ id: photo._id });
-                      } finally {
-                        setDeletingPhotoId(null);
-                      }
-                    }}
+                    onClick={() => setPhotoToDelete(photo._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -227,6 +292,35 @@ export default function IterationViewPage() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={photoToDelete !== null} onOpenChange={(open) => !open && setPhotoToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete photo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This photo will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (!photoToDelete) return;
+                setDeletingPhotoId(photoToDelete);
+                try {
+                  await deleteIterationPhoto({ id: photoToDelete });
+                } finally {
+                  setDeletingPhotoId(null);
+                  setPhotoToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {iteration.notes && iteration.notes.trim() && (
         <Card>

@@ -18,6 +18,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
@@ -53,6 +63,7 @@ export default function IterationEditPage() {
   const [initialized, setInitialized] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
 
   useEffect(() => {
@@ -232,14 +243,25 @@ export default function IterationEditPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="bakeDate">Bake date</Label>
-              <Input
-                id="bakeDate"
-                type="date"
-                value={bakeDate}
-                onChange={(e) => setBakeDate(e.target.value)}
-                required
-                disabled={isSubmitting}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="bakeDate"
+                  type="date"
+                  value={bakeDate}
+                  onChange={(e) => setBakeDate(e.target.value)}
+                  required
+                  disabled={isSubmitting}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isSubmitting}
+                  onClick={() => setBakeDate(new Date().toISOString().slice(0, 10))}
+                >
+                  Today
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="rating">Rating (optional, 1–5)</Label>
@@ -278,7 +300,7 @@ export default function IterationEditPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="gap-2">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save changes"}
             </Button>
@@ -321,14 +343,7 @@ export default function IterationEditPage() {
                     className="absolute top-2 right-2 h-8 w-8 opacity-90 hover:opacity-100"
                     disabled={deletingPhotoId !== null || isSubmitting}
                     aria-label="Remove photo"
-                    onClick={async () => {
-                      setDeletingPhotoId(photo._id);
-                      try {
-                        await deleteIterationPhoto({ id: photo._id });
-                      } finally {
-                        setDeletingPhotoId(null);
-                      }
-                    }}
+                    onClick={() => setPhotoToDelete(photo._id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -336,6 +351,35 @@ export default function IterationEditPage() {
               ))}
             </div>
           )}
+
+          <AlertDialog open={photoToDelete !== null} onOpenChange={(open) => !open && setPhotoToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete photo?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This photo will be permanently deleted.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    if (!photoToDelete) return;
+                    setDeletingPhotoId(photoToDelete);
+                    try {
+                      await deleteIterationPhoto({ id: photoToDelete });
+                    } finally {
+                      setDeletingPhotoId(null);
+                      setPhotoToDelete(null);
+                    }
+                  }}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <div>
             <Label htmlFor="photo-upload" className="sr-only">
               Add photos

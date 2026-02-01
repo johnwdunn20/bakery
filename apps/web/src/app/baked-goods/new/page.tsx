@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@bakery/backend";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,9 +79,12 @@ export default function NewBakedGoodPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="gap-2">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating…" : "Create Baked Good"}
+            </Button>
+            <Button type="button" variant="outline" asChild disabled={isSubmitting}>
+              <Link href="/my-bakery">Cancel</Link>
             </Button>
           </CardFooter>
         </form>

@@ -37,7 +37,7 @@ export default function NewIterationPage() {
   const [recipeContent, setRecipeContent] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
   const [totalTime, setTotalTime] = useState("");
-  const [bakeDate, setBakeDate] = useState("");
+  const [bakeDate, setBakeDate] = useState(new Date().toISOString().slice(0, 10));
   const [rating, setRating] = useState("");
   const [notes, setNotes] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
@@ -178,14 +178,25 @@ export default function NewIterationPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="bakeDate">Bake date</Label>
-              <Input
-                id="bakeDate"
-                type="date"
-                value={bakeDate}
-                onChange={(e) => setBakeDate(e.target.value)}
-                required
-                disabled={isSubmitting}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="bakeDate"
+                  type="date"
+                  value={bakeDate}
+                  onChange={(e) => setBakeDate(e.target.value)}
+                  required
+                  disabled={isSubmitting}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isSubmitting}
+                  onClick={() => setBakeDate(new Date().toISOString().slice(0, 10))}
+                >
+                  Today
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="rating">Rating (optional, 1–5)</Label>
@@ -236,7 +247,7 @@ export default function NewIterationPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="gap-2">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating…" : "Add iteration"}
             </Button>

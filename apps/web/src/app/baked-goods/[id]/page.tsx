@@ -15,6 +15,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ArrowDown, ArrowUp, CalendarClock, Copy, Image, List, Plus, Star } from "lucide-react";
 
 type ViewMode = "list" | "timeline";
@@ -153,24 +164,43 @@ export default function BakedGoodDetailPage() {
               </p>
             )}
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled={duplicatingId !== null}
-            aria-label="Duplicate iteration"
-            onClick={async (e) => {
-              e.preventDefault();
-              setDuplicatingId(it._id);
-              try {
-                const newId = await duplicateIteration({ id: it._id });
-                router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
-              } finally {
-                setDuplicatingId(null);
-              }
-            }}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={duplicatingId !== null}
+                aria-label="Duplicate iteration"
+                onClick={(e) => e.preventDefault()}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will create a new iteration with today's date, copying the recipe content, difficulty, and time. You can edit it before saving.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    setDuplicatingId(it._id);
+                    try {
+                      const newId = await duplicateIteration({ id: it._id });
+                      router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+                    } finally {
+                      setDuplicatingId(null);
+                    }
+                  }}
+                >
+                  Duplicate
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     );
