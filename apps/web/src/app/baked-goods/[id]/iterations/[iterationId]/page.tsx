@@ -1,9 +1,10 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
@@ -11,7 +12,7 @@ import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Copy, Pencil } from "lucide-react";
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -67,8 +68,12 @@ const markdownComponents: Components = {
 
 export default function IterationViewPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const iterationId = params.iterationId as string;
+  const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const iteration = useQuery(
     api.bakedGoods.getIteration,
     iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
@@ -114,13 +119,41 @@ export default function IterationViewPage() {
             Back to {bakedGoodName}
           </Link>
         </Button>
-        <Button size="sm" asChild>
-          <Link href={`/baked-goods/${id}/iterations/${iterationId}/edit`}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isDuplicating}
+            onClick={async () => {
+              setDuplicateError(null);
+              setIsDuplicating(true);
+              try {
+                const newId = await duplicateIteration({
+                  id: iterationId as Id<"recipeIterations">,
+                });
+                router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+              } catch (err) {
+                setDuplicateError(
+                  err instanceof Error ? err.message : "Failed to duplicate."
+                );
+                setIsDuplicating(false);
+              }
+            }}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            {isDuplicating ? "Duplicating…" : "Duplicate"}
+          </Button>
+          <Button size="sm" asChild>
+            <Link href={`/baked-goods/${id}/iterations/${iterationId}/edit`}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </Link>
+          </Button>
+        </div>
       </div>
+      {duplicateError && (
+        <p className="text-sm text-destructive">{duplicateError}</p>
+      )}
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <span className="font-medium text-foreground">

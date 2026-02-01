@@ -284,6 +284,39 @@ export const deleteIteration = mutation({
   },
 });
 
+export const duplicateIteration = mutation({
+  args: { id: v.id("recipeIterations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+    const iteration = await ctx.db.get(args.id);
+    if (!iteration) throw new Error("Iteration not found");
+    const bakedGood = await ctx.db.get(iteration.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Iteration not found or not owned by you");
+    }
+    const now = Date.now();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const bakeDate = todayStart.getTime();
+    return await ctx.db.insert("recipeIterations", {
+      bakedGoodId: iteration.bakedGoodId,
+      recipeContent: iteration.recipeContent,
+      difficulty: iteration.difficulty,
+      totalTime: iteration.totalTime,
+      bakeDate,
+      sourceUrl: iteration.sourceUrl,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
 export const listCommunityBakedGoods = query({
   args: {},
   handler: async (ctx) => {

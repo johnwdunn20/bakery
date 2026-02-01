@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
 import { useParams, useRouter } from "next/navigation";
@@ -8,7 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus } from "lucide-react";
+import { Copy, Plus } from "lucide-react";
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -29,6 +30,8 @@ export default function BakedGoodDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
+  const [duplicatingId, setDuplicatingId] = useState<Id<"recipeIterations"> | null>(null);
   const bakedGood = useQuery(
     api.bakedGoods.getBakedGoodWithIterations,
     id ? { id: id as Id<"bakedGoods"> } : "skip"
@@ -115,12 +118,12 @@ export default function BakedGoodDetailPage() {
             <ul className="space-y-3">
               {iterations.map((it) => (
                 <li key={it._id}>
-                  <Link
-                    href={`/baked-goods/${id}/iterations/${it._id}`}
-                    className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
-                  >
-                    <Card className="border bg-card transition-colors hover:bg-accent/50">
-                      <CardContent className="p-4">
+                  <Card className="border bg-card transition-colors hover:bg-accent/50">
+                    <CardContent className="p-4 flex items-start gap-2">
+                      <Link
+                        href={`/baked-goods/${id}/iterations/${it._id}`}
+                        className="flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+                      >
                         <div className="flex flex-wrap items-center gap-2 text-sm">
                           <span className="font-medium">{formatDate(it.bakeDate)}</span>
                           {it.rating != null && (
@@ -137,9 +140,27 @@ export default function BakedGoodDetailPage() {
                             {it.notes?.trim() || it.recipeContent?.trim().split("\n")[0] || ""}
                           </p>
                         )}
-                      </CardContent>
-                    </Card>
-                  </Link>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={duplicatingId !== null}
+                        aria-label="Duplicate iteration"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          setDuplicatingId(it._id);
+                          try {
+                            const newId = await duplicateIteration({ id: it._id });
+                            router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+                          } finally {
+                            setDuplicatingId(null);
+                          }
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </li>
               ))}
             </ul>
