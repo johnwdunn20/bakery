@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
@@ -37,6 +37,9 @@ export default function IterationEditPage() {
     iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
   );
   const updateIteration = useMutation(api.bakedGoods.updateIteration);
+  const generateUploadUrl = useMutation(api.bakedGoods.generateUploadUrl);
+  const addIterationPhoto = useMutation(api.bakedGoods.addIterationPhoto);
+  const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
 
   const [recipeContent, setRecipeContent] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
@@ -48,6 +51,9 @@ export default function IterationEditPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
 
   useEffect(() => {
     if (iteration && !initialized) {
@@ -104,6 +110,33 @@ export default function IterationEditPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update iteration.");
       setIsSubmitting(false);
+    }
+  }
+
+  async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setUploadError(null);
+    setIsUploading(true);
+    const photoCount = iteration?.photos?.length ?? 0;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const uploadUrl = await generateUploadUrl();
+        const response = await fetch(uploadUrl, { method: "POST", body: file });
+        if (!response.ok) throw new Error("Upload failed");
+        const { storageId } = (await response.json()) as { storageId: string };
+        await addIterationPhoto({
+          iterationId: iterationId as Id<"recipeIterations">,
+          storageId: storageId as Id<"_storage">,
+          order: photoCount + i,
+        });
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Failed to upload photos.");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
     }
   }
 
@@ -256,6 +289,70 @@ export default function IterationEditPage() {
             </Button>
           </CardFooter>
         </form>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base">Photos</CardTitle>
+          <CardDescription>Add or remove photos for this iteration.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {iteration.photos && iteration.photos.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {iteration.photos.map((photo) => (
+                <div
+                  key={photo._id}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-muted"
+                >
+                  {photo.url ? (
+                    <img
+                      src={photo.url}
+                      alt="Iteration"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                      Unavailable
+                    </div>
+                  )}
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-90 hover:opacity-100"
+                    disabled={deletingPhotoId !== null || isSubmitting}
+                    aria-label="Remove photo"
+                    onClick={async () => {
+                      setDeletingPhotoId(photo._id);
+                      try {
+                        await deleteIterationPhoto({ id: photo._id });
+                      } finally {
+                        setDeletingPhotoId(null);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div>
+            <Label htmlFor="photo-upload" className="sr-only">
+              Add photos
+            </Label>
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={isUploading || isSubmitting}
+              onChange={handlePhotoSelect}
+              className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:text-sm file:font-medium"
+            />
+            {isUploading && <p className="text-sm text-muted-foreground mt-2">Uploading…</p>}
+            {uploadError && <p className="text-sm text-destructive mt-2">{uploadError}</p>}
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

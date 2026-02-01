@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Plus } from "lucide-react";
+import { Copy, Image, Plus } from "lucide-react";
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -119,7 +119,18 @@ export default function BakedGoodDetailPage() {
               {iterations.map((it) => (
                 <li key={it._id}>
                   <Card className="border bg-card transition-colors hover:bg-accent/50">
-                    <CardContent className="p-4 flex items-start gap-2">
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                        {"firstPhotoUrl" in it && it.firstPhotoUrl ? (
+                          <img
+                            src={it.firstPhotoUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Image className="h-6 w-6 text-muted-foreground" aria-hidden />
+                        )}
+                      </div>
                       <Link
                         href={`/baked-goods/${id}/iterations/${it._id}`}
                         className="flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"

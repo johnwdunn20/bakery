@@ -128,7 +128,26 @@ export const getBakedGoodWithIterations = query({
       .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.id))
       .collect();
 
-    const iterations = rawIterations.sort((a, b) => b.bakeDate - a.bakeDate);
+    const sortedIterations = rawIterations.sort((a, b) => b.bakeDate - a.bakeDate);
+
+    const iterations = await Promise.all(
+      sortedIterations.map(async (it) => {
+        const photos = await ctx.db
+          .query("iterationPhotos")
+          .withIndex("by_iteration", (q) => q.eq("iterationId", it._id))
+          .collect();
+        photos.sort((a, b) => a.order - b.order);
+        const firstPhoto = photos[0] ?? null;
+        const firstPhotoUrl = firstPhoto
+          ? await ctx.storage.getUrl(firstPhoto.storageId)
+          : null;
+        return {
+          ...it,
+          photoCount: photos.length,
+          firstPhotoUrl,
+        };
+      })
+    );
 
     const ratings = iterations
       .map((i) => i.rating)
@@ -174,10 +193,108 @@ export const getIteration = query({
       .collect();
     photos.sort((a, b) => a.order - b.order);
 
+    const photosWithUrls = await Promise.all(
+      photos.map(async (p) => ({
+        _id: p._id,
+        storageId: p.storageId,
+        order: p.order,
+        url: await ctx.storage.getUrl(p.storageId),
+      }))
+    );
+
     return {
       ...iteration,
-      photos: photos.map((p) => ({ _id: p._id, storageId: p.storageId, order: p.order })),
+      photos: photosWithUrls,
     };
+  },
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const addIterationPhoto = mutation({
+  args: {
+    iterationId: v.id("recipeIterations"),
+    storageId: v.id("_storage"),
+    order: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const iteration = await ctx.db.get(args.iterationId);
+    if (!iteration) throw new Error("Iteration not found");
+
+    const bakedGood = await ctx.db.get(iteration.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Iteration not found or not owned by you");
+    }
+
+    const existingPhotos = await ctx.db
+      .query("iterationPhotos")
+      .withIndex("by_iteration", (q) => q.eq("iterationId", args.iterationId))
+      .collect();
+    const maxOrder =
+      existingPhotos.length > 0
+        ? Math.max(...existingPhotos.map((p) => p.order))
+        : -1;
+    const order = args.order ?? maxOrder + 1;
+    const now = Date.now();
+
+    return await ctx.db.insert("iterationPhotos", {
+      iterationId: args.iterationId,
+      storageId: args.storageId,
+      order,
+      createdAt: now,
+    });
+  },
+});
+
+export const deleteIterationPhoto = mutation({
+  args: { id: v.id("iterationPhotos") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const photo = await ctx.db.get(args.id);
+    if (!photo) throw new Error("Photo not found");
+
+    const iteration = await ctx.db.get(photo.iterationId);
+    if (!iteration) throw new Error("Iteration not found");
+
+    const bakedGood = await ctx.db.get(iteration.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Photo not found or not owned by you");
+    }
+
+    await ctx.storage.delete(photo.storageId);
+    await ctx.db.delete(args.id);
+    return args.id;
   },
 });
 

@@ -12,7 +12,7 @@ import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Copy, Pencil } from "lucide-react";
+import { ArrowLeft, Copy, Pencil, Trash2 } from "lucide-react";
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -72,8 +72,10 @@ export default function IterationViewPage() {
   const id = params.id as string;
   const iterationId = params.iterationId as string;
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
+  const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
   const iteration = useQuery(
     api.bakedGoods.getIteration,
     iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
@@ -178,6 +180,53 @@ export default function IterationViewPage() {
           </a>
         )}
       </div>
+
+      {iteration.photos && iteration.photos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {iteration.photos.map((photo) => (
+                <div
+                  key={photo._id}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-muted"
+                >
+                  {photo.url ? (
+                    <img
+                      src={photo.url}
+                      alt="Iteration"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                      Unavailable
+                    </div>
+                  )}
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-90 hover:opacity-100"
+                    disabled={deletingPhotoId !== null}
+                    aria-label="Remove photo"
+                    onClick={async () => {
+                      setDeletingPhotoId(photo._id);
+                      try {
+                        await deleteIterationPhoto({ id: photo._id });
+                      } finally {
+                        setDeletingPhotoId(null);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {iteration.notes && iteration.notes.trim() && (
         <Card>

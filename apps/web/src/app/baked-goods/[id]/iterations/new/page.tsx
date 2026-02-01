@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
@@ -30,6 +30,9 @@ export default function NewIterationPage() {
     bakedGoodId ? { id: bakedGoodId as Id<"bakedGoods"> } : "skip"
   );
   const createIteration = useMutation(api.bakedGoods.createIteration);
+  const generateUploadUrl = useMutation(api.bakedGoods.generateUploadUrl);
+  const addIterationPhoto = useMutation(api.bakedGoods.addIterationPhoto);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [recipeContent, setRecipeContent] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
@@ -68,8 +71,9 @@ export default function NewIterationPage() {
       return;
     }
     setIsSubmitting(true);
+    const files = photoInputRef.current?.files;
     try {
-      await createIteration({
+      const newId = await createIteration({
         bakedGoodId: bakedGoodId as Id<"bakedGoods">,
         recipeContent: recipeContent.trim(),
         difficulty: difficulty.trim(),
@@ -79,7 +83,21 @@ export default function NewIterationPage() {
         notes: notes.trim() || undefined,
         sourceUrl: sourceUrl.trim() || undefined,
       });
-      router.push(`/baked-goods/${bakedGoodId}`);
+      if (files?.length) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const uploadUrl = await generateUploadUrl();
+          const response = await fetch(uploadUrl, { method: "POST", body: file });
+          if (!response.ok) throw new Error("Upload failed");
+          const { storageId } = (await response.json()) as { storageId: string };
+          await addIterationPhoto({
+            iterationId: newId,
+            storageId: storageId as Id<"_storage">,
+            order: i,
+          });
+        }
+      }
+      router.push(`/baked-goods/${bakedGoodId}/iterations/${newId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create iteration.");
       setIsSubmitting(false);
@@ -202,6 +220,18 @@ export default function NewIterationPage() {
                 onChange={(e) => setSourceUrl(e.target.value)}
                 placeholder="https://..."
                 disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="photo-upload">Photos (optional)</Label>
+              <input
+                ref={photoInputRef}
+                id="photo-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={isSubmitting}
+                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:text-sm file:font-medium"
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
