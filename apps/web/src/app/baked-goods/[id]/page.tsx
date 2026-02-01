@@ -5,13 +5,7 @@ import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus } from "lucide-react";
 

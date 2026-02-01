@@ -4,21 +4,13 @@ import { useCurrentUser } from "@/hooks";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserButton } from "@clerk/nextjs";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
-export default function BakedGoodsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function BakedGoodsLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isSignedIn } = useCurrentUser();
 
   useEffect(() => {

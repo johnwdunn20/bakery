@@ -8,12 +8,28 @@ const SEED_USERS = [
 ];
 
 const SEED_BAKED_GOODS: { name: string; description?: string; authorIndex: number }[] = [
-  { name: "Classic Sourdough", description: "A crusty, tangy loaf with an open crumb.", authorIndex: 0 },
-  { name: "Pain au Chocolat", description: "Buttery, flaky French pastry filled with dark chocolate.", authorIndex: 0 },
-  { name: "Chewy Chocolate Chip Cookies", description: "The perfect balance of crispy edges and a soft, chewy center.", authorIndex: 1 },
+  {
+    name: "Classic Sourdough",
+    description: "A crusty, tangy loaf with an open crumb.",
+    authorIndex: 0,
+  },
+  {
+    name: "Pain au Chocolat",
+    description: "Buttery, flaky French pastry filled with dark chocolate.",
+    authorIndex: 0,
+  },
+  {
+    name: "Chewy Chocolate Chip Cookies",
+    description: "The perfect balance of crispy edges and a soft, chewy center.",
+    authorIndex: 1,
+  },
   { name: "Banana Bread", description: "Moist and warmly spiced quick bread.", authorIndex: 1 },
   { name: "Croissants", description: "Layered, buttery laminated pastry.", authorIndex: 0 },
-  { name: "Cinnamon Rolls", description: "Soft buns with cinnamon swirl and cream cheese frosting.", authorIndex: 1 },
+  {
+    name: "Cinnamon Rolls",
+    description: "Soft buns with cinnamon swirl and cream cheese frosting.",
+    authorIndex: 1,
+  },
 ];
 
 export const run = action({

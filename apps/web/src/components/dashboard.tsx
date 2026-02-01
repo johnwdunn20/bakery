@@ -3,13 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks";
 import { Plus, ChefHat, Clock } from "lucide-react";
@@ -62,8 +56,8 @@ export function Dashboard() {
               </div>
               <CardTitle className="text-xl">No baked goods yet</CardTitle>
               <CardDescription className="max-w-sm mx-auto">
-                Start building your baking journal by creating your first
-                baked good. Track iterations, variations, and perfect your craft.
+                Start building your baking journal by creating your first baked good. Track
+                iterations, variations, and perfect your craft.
               </CardDescription>
             </CardHeader>
             <CardFooter className="justify-center pb-8">
@@ -90,9 +84,7 @@ export function Dashboard() {
                       {bg.name}
                     </CardTitle>
                     {bg.description && (
-                      <CardDescription className="line-clamp-2">
-                        {bg.description}
-                      </CardDescription>
+                      <CardDescription className="line-clamp-2">{bg.description}</CardDescription>
                     )}
                   </CardHeader>
                   <CardFooter className="text-xs text-muted-foreground">
@@ -114,9 +106,7 @@ export function Dashboard() {
                     <Plus className="h-6 w-6 text-primary" />
                   </div>
                   <p className="font-medium">Add New Baked Good</p>
-                  <p className="text-sm text-muted-foreground">
-                    Start a new baking experiment
-                  </p>
+                  <p className="text-sm text-muted-foreground">Start a new baking experiment</p>
                 </div>
               </Card>
             </a>

@@ -136,9 +136,7 @@ export const listCommunityBakedGoods = query({
   args: {},
   handler: async (ctx) => {
     const list = await ctx.db.query("bakedGoods").collect();
-    const bakedGoods = list
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 12);
+    const bakedGoods = list.sort((a, b) => b.createdAt - a.createdAt).slice(0, 12);
 
     return await Promise.all(
       bakedGoods.map(async (bg) => {

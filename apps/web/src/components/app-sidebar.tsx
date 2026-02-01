@@ -64,9 +64,7 @@ export function AppSidebar() {
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">My Bakery</span>
-                  <span className="text-xs text-muted-foreground">
-                    Your baking journal
-                  </span>
+                  <span className="text-xs text-muted-foreground">Your baking journal</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -89,10 +87,7 @@ export function AppSidebar() {
               ) : bakedGoods.length === 0 ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a
-                      href="/baked-goods/new"
-                      className="text-muted-foreground italic"
-                    >
+                    <a href="/baked-goods/new" className="text-muted-foreground italic">
                       <Plus className="size-4" />
                       <span>Create your first baked good</span>
                     </a>
@@ -194,9 +189,7 @@ export function AppSidebar() {
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{displayName}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {user?.email}
-                    </span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
