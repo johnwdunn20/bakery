@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Bakery",
-  description: "Your personal baking journal - store recipes, track variations, and master the science of baking.",
+  description:
+    "Your personal baking journal - store recipes, track variations, and master the science of baking.",
 };
 
 export default function RootLayout({

@@ -1,0 +1,11 @@
+---
+description: Run prettier after making file changes
+globs:
+alwaysApply: true
+---
+
+After completing file edits, run the project's format command to ensure consistent formatting:
+
+```bash
+pnpm format
+```

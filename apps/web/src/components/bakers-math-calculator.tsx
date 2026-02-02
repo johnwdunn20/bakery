@@ -54,7 +54,9 @@ export function BakersMathCalculator() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="flour-input" className="text-lg font-medium">Total Flour Amount (g)</Label>
+          <Label htmlFor="flour-input" className="text-lg font-medium">
+            Total Flour Amount (g)
+          </Label>
           <Input
             id="flour-input"
             type="number"
@@ -77,7 +79,10 @@ export function BakersMathCalculator() {
               {calculatedIngredients.map((ing) => (
                 <tr key={ing.name} className={ing.isFlour ? "bg-primary/5" : ""}>
                   <td className="p-4 font-medium">{ing.name}</td>
-                  <td className="p-4">{ing.amount}{ing.unit}</td>
+                  <td className="p-4">
+                    {ing.amount}
+                    {ing.unit}
+                  </td>
                   <td className="p-4 text-right text-muted-foreground font-mono">
                     {ing.percentage.toFixed(1)}%
                   </td>
@@ -86,7 +91,7 @@ export function BakersMathCalculator() {
             </tbody>
           </table>
         </div>
-        
+
         <p className="text-sm text-center text-muted-foreground italic">
           Try changing the flour to see how professional bakers scale their bakes.
         </p>

@@ -1,0 +1,380 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@bakery/backend";
+import type { Id } from "@bakery/backend/dataModel";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { ArrowLeft, Copy, Loader2, Pencil, Trash2, X } from "lucide-react";
+import { PhotoLightbox } from "@/components/ui/photo-lightbox";
+import { PhotoGrid } from "@/components/ui/photo-dropzone";
+
+function formatDate(ts: number) {
+  return new Date(ts).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatMinutes(min: number) {
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
+const markdownComponents: Components = {
+  h1: ({ children }) => <h1 className="mt-6 mb-3 text-2xl font-bold first:mt-0">{children}</h1>,
+  h2: ({ children }) => <h2 className="mt-5 mb-2 text-xl font-bold">{children}</h2>,
+  h3: ({ children }) => <h3 className="mt-4 mb-2 text-lg font-semibold">{children}</h3>,
+  p: ({ children }) => <p className="mb-3 leading-relaxed last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="mb-3 list-disc pl-6 space-y-1">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-3 list-decimal pl-6 space-y-1">{children}</ol>,
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  code: ({ className, children, ...props }) => (
+    <code className={className ?? "rounded bg-muted px-1.5 py-0.5 font-mono text-sm"} {...props}>
+      {children}
+    </code>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-muted-foreground/30 pl-4 italic text-muted-foreground">
+      {children}
+    </blockquote>
+  ),
+};
+
+export default function IterationViewPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
+  const iterationId = params.iterationId as string;
+  const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
+  const deleteIteration = useMutation(api.bakedGoods.deleteIteration);
+  const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
+  const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const iteration = useQuery(
+    api.bakedGoods.getIteration,
+    iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
+  );
+  const bakedGood = useQuery(
+    api.bakedGoods.getBakedGoodWithIterations,
+    id ? { id: id as Id<"bakedGoods"> } : "skip"
+  );
+
+  if (iteration === undefined) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl space-y-4">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
+
+  if (iteration === null) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl">
+        <p className="text-muted-foreground">Iteration not found.</p>
+        <Button variant="link" asChild>
+          <Link href={id ? `/baked-goods/${id}` : "/my-bakery"}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to baked good
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const bakedGoodName = bakedGood && "name" in bakedGood ? bakedGood.name : "Baked good";
+
+  return (
+    <div className="p-6 md:p-8 max-w-4xl space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/my-bakery">My Bakery</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/baked-goods/${id}`}>{bakedGoodName}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{formatDate(iteration.bakeDate)}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" variant="outline" disabled={isDuplicating}>
+              {isDuplicating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Copy className="mr-2 h-4 w-4" />
+              )}
+              {isDuplicating ? "Duplicating…" : "Duplicate"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will create a new iteration with today's date, copying the recipe content,
+                difficulty, and time. You can edit it before saving.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  setDuplicateError(null);
+                  setIsDuplicating(true);
+                  try {
+                    const newId = await duplicateIteration({
+                      id: iterationId as Id<"recipeIterations">,
+                    });
+                    router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+                  } catch (err) {
+                    setDuplicateError(err instanceof Error ? err.message : "Failed to duplicate.");
+                    setIsDuplicating(false);
+                  }
+                }}
+              >
+                Duplicate
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Button size="sm" asChild>
+          <Link href={`/baked-goods/${id}/iterations/${iterationId}/edit`}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </Link>
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" variant="destructive" disabled={isDeleting}>
+              {isDeleting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              {isDeleting ? "Deleting…" : "Delete"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete iteration?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete this bake iteration. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                  setDeleteError(null);
+                  setIsDeleting(true);
+                  try {
+                    await deleteIteration({
+                      id: iterationId as Id<"recipeIterations">,
+                    });
+                    router.push(`/baked-goods/${id}`);
+                  } catch (err) {
+                    setDeleteError(err instanceof Error ? err.message : "Failed to delete.");
+                    setIsDeleting(false);
+                  }
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+      {duplicateError && <p className="text-sm text-destructive">{duplicateError}</p>}
+      {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+
+      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">{formatDate(iteration.bakeDate)}</span>
+        {iteration.rating != null && (
+          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
+            {iteration.rating}/5
+          </span>
+        )}
+        <span>
+          {iteration.difficulty} · {formatMinutes(iteration.totalTime)}
+        </span>
+        {iteration.sourceUrl && (
+          <a
+            href={iteration.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:no-underline"
+          >
+            Source
+          </a>
+        )}
+      </div>
+
+      {iteration.photos && iteration.photos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PhotoGrid>
+              {iteration.photos.map((photo, index) => (
+                <div
+                  key={photo._id}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
+                  onClick={() => {
+                    if (photo.url) {
+                      setLightboxIndex(index);
+                      setLightboxOpen(true);
+                    }
+                  }}
+                >
+                  {photo.url ? (
+                    <img
+                      src={photo.url}
+                      alt={`Photo ${index + 1} of ${bakedGoodName}`}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                      Unavailable
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    disabled={deletingPhotoId !== null}
+                    aria-label="Remove photo"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPhotoToDelete(photo._id);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </PhotoGrid>
+          </CardContent>
+        </Card>
+      )}
+
+      <PhotoLightbox
+        photos={
+          iteration.photos
+            ?.filter((p) => p.url)
+            .map((p, i) => ({
+              url: p.url!,
+              alt: `Photo ${i + 1} of ${bakedGoodName}`,
+            })) ?? []
+        }
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+      />
+
+      <AlertDialog
+        open={photoToDelete !== null}
+        onOpenChange={(open) => !open && setPhotoToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete photo?</AlertDialogTitle>
+            <AlertDialogDescription>This photo will be permanently deleted.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (!photoToDelete) return;
+                setDeletingPhotoId(photoToDelete);
+                try {
+                  await deleteIterationPhoto({ id: photoToDelete });
+                } finally {
+                  setDeletingPhotoId(null);
+                  setPhotoToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {iteration.notes && iteration.notes.trim() && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{iteration.notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Recipe</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="prose-recipe min-w-0">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {iteration.recipeContent}
+            </ReactMarkdown>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

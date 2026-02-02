@@ -35,9 +35,7 @@ export interface Ingredient {
 }
 
 export function calculateBakersPercentage(ingredients: Ingredient[]) {
-  const totalFlour = ingredients
-    .filter((i) => i.isFlour)
-    .reduce((sum, i) => sum + i.amount, 0);
+  const totalFlour = ingredients.filter((i) => i.isFlour).reduce((sum, i) => sum + i.amount, 0);
 
   if (totalFlour === 0) return ingredients.map((i) => ({ ...i, percentage: 0 }));
 

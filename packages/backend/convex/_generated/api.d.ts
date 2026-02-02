@@ -8,7 +8,7 @@
  * @module
  */
 
-import type * as recipes from "../recipes.js";
+import type * as bakedGoods from "../bakedGoods.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
 
@@ -19,7 +19,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  recipes: typeof recipes;
+  bakedGoods: typeof bakedGoods;
   seed: typeof seed;
   users: typeof users;
 }>;

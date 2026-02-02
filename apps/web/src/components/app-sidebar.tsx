@@ -12,6 +12,7 @@ import {
   Settings,
   ChevronsUpDown,
   Home,
+  CakeSlice,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -41,7 +42,7 @@ import { useCurrentUser } from "@/hooks";
 
 export function AppSidebar() {
   const { user, isLoading: userLoading } = useCurrentUser();
-  const recipes = useQuery(api.recipes.listMyRecipes);
+  const bakedGoods = useQuery(api.bakedGoods.listMyBakedGoods);
   const { signOut } = useClerk();
 
   const displayName = user?.name || user?.username || "Baker";
@@ -64,9 +65,7 @@ export function AppSidebar() {
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">My Bakery</span>
-                  <span className="text-xs text-muted-foreground">
-                    Your baking journal
-                  </span>
+                  <span className="text-xs text-muted-foreground">Your baking journal</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -75,40 +74,34 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* My Recipes Section */}
+        {/* My Baked Goods Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>My Recipes</SidebarGroupLabel>
+          <SidebarGroupLabel>My Baked Goods</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {recipes === undefined ? (
-                // Loading state
+              {bakedGoods === undefined ? (
                 <>
                   <SidebarMenuSkeleton showIcon />
                   <SidebarMenuSkeleton showIcon />
                   <SidebarMenuSkeleton showIcon />
                 </>
-              ) : recipes.length === 0 ? (
-                // Empty state
+              ) : bakedGoods.length === 0 ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a
-                      href="/recipes/new"
-                      className="text-muted-foreground italic"
-                    >
+                    <Link href="/baked-goods/new" className="text-muted-foreground italic">
                       <Plus className="size-4" />
-                      <span>Create your first recipe</span>
-                    </a>
+                      <span>Create your first baked good</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : (
-                // Recipe list
-                recipes.map((recipe) => (
-                  <SidebarMenuItem key={recipe._id}>
-                    <SidebarMenuButton asChild tooltip={recipe.name}>
-                      <a href={`/recipes/${recipe._id}`}>
-                        <span className="text-lg">🍞</span>
-                        <span>{recipe.name}</span>
-                      </a>
+                bakedGoods.map((bg) => (
+                  <SidebarMenuItem key={bg._id}>
+                    <SidebarMenuButton asChild tooltip={bg.name}>
+                      <Link href={`/baked-goods/${bg._id}`}>
+                        <CakeSlice className="size-4" />
+                        <span>{bg.name}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))
@@ -117,18 +110,18 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* New Recipe Button */}
+        {/* New Baked Good Button */}
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <a
-                  href="/recipes/new"
+                <Link
+                  href="/baked-goods/new"
                   className="bg-primary/10 hover:bg-primary/20 text-primary"
                 >
                   <Plus className="size-4" />
-                  <span>New Recipe</span>
-                </a>
+                  <span>New Baked Good</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -143,18 +136,18 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Baker's Math Calculator">
-                  <a href="/tools/calculator">
+                  <Link href="/tools/calculator">
                     <Calculator className="size-4" />
                     <span>Baker&apos;s Math</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Ingredient Substitutions">
-                  <a href="/tools/substitutions">
+                  <Link href="/tools/substitutions">
                     <ArrowLeftRight className="size-4" />
                     <span>Substitutions</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -197,9 +190,7 @@ export function AppSidebar() {
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{displayName}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {user?.email}
-                    </span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>

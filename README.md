@@ -27,6 +27,7 @@ A professional-grade recipe management and experimentation platform for at-home 
     - V2 is pulling out ingredients into our own tables
   - Categorize (tag?). Also want to be able to favorite
   - Pantry shopping list that pulls from recipes
+  - Pantry - current goods
   - Track sourdough / sourdough starter
   - Historical view
     - Feed

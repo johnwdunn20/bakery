@@ -20,6 +20,7 @@ todos:
   - id: phase-6-timeline-sorting
     content: Ship list/timeline toggle and sorting on baked good detail page.
     status: pending
+isProject: false
 ---
 
 # Baked Goods + Recipe Iterations
@@ -30,8 +31,8 @@ Replace the existing `recipes`/`variants` schema with `bakedGoods`/`recipeIterat
 
 ## Repo conventions to follow
 
-- Convex schema: [`packages/backend/convex/schema.ts`](packages/backend/convex/schema.ts)
-- Convex functions: [`packages/backend/convex/*.ts`](packages/backend/convex/)
+- Convex schema: `[packages/backend/convex/schema.ts](packages/backend/convex/schema.ts)`
+- Convex functions: `[packages/backend/convex/*.ts](packages/backend/convex/)`
 - Web imports:
 - Convex API: `import { api } from "@bakery/backend"`
 - Shadcn UI: `@/components/ui/*`
@@ -43,24 +44,23 @@ Replace the existing `recipes`/`variants` schema with `bakedGoods`/`recipeIterat
 **User-visible feature:** The app’s main “My bakery” experience lets you create baked goods and view their (empty) detail page.
 
 - **Backend (Convex)**
-- Update [`packages/backend/convex/schema.ts`](packages/backend/convex/schema.ts)
+- Update `[packages/backend/convex/schema.ts](packages/backend/convex/schema.ts)`
 - Remove old tables: `recipes`, `variants`, `ingredients` (and any related indexes)
 - Add new tables:
 - `bakedGoods` (authorId, name, description?, createdAt, updatedAt)
 - `recipeIterations` (bakedGoodId, recipeContent, difficulty, totalTime, bakeDate, rating?, notes?, sourceUrl?, createdAt, updatedAt)
 - `iterationPhotos` (iterationId, storageId, order, createdAt)
-- Add [`packages/backend/convex/bakedGoods.ts`](packages/backend/convex/bakedGoods.ts)
+- Add `[packages/backend/convex/bakedGoods.ts](packages/backend/convex/bakedGoods.ts)`
 - Mutations: `createBakedGood`, `updateBakedGood`, `deleteBakedGood`
 - Queries: `listMyBakedGoods`, `getBakedGood` (or `getBakedGoodWithIterations` returning empty iterations initially)
-- Delete old functions file: [`packages/backend/convex/recipes.ts`](packages/backend/convex/recipes.ts)
-
+- Delete old functions file: `[packages/backend/convex/recipes.ts](packages/backend/convex/recipes.ts)`
 - **Web (Next.js)**
 - Update existing entrypoints to use baked goods:
-- [`apps/web/src/components/dashboard.tsx`](apps/web/src/components/dashboard.tsx)
-- [`apps/web/src/components/app-sidebar.tsx`](apps/web/src/components/app-sidebar.tsx)
+- `[apps/web/src/components/dashboard.tsx](apps/web/src/components/dashboard.tsx)`
+- `[apps/web/src/components/app-sidebar.tsx](apps/web/src/components/app-sidebar.tsx)`
 - Add pages:
-- [`apps/web/src/app/baked-goods/new/page.tsx`](apps/web/src/app/baked-goods/new/page.tsx) (name/description form)
-- [`apps/web/src/app/baked-goods/[id]/page.tsx`](apps/web/src/app/baked-goods/[id]/page.tsx) (shows name/description + “Add iteration” CTA, but can be empty)
+- `[apps/web/src/app/baked-goods/new/page.tsx](apps/web/src/app/baked-goods/new/page.tsx)` (name/description form)
+- `[apps/web/src/app/baked-goods/[id]/page.tsx](apps/web/src/app/baked-goods/[id]/page.tsx)` (shows name/description + “Add iteration” CTA, but can be empty)
 
 **Definition of done / smoke test**
 
@@ -75,14 +75,13 @@ Replace the existing `recipes`/`variants` schema with `bakedGoods`/`recipeIterat
 **User-visible feature:** Users can add recipe iterations (with bake date/time/difficulty/rating) and see them on the baked good page.
 
 - **Backend**
-- In [`packages/backend/convex/bakedGoods.ts`](packages/backend/convex/bakedGoods.ts)
+- In `[packages/backend/convex/bakedGoods.ts](packages/backend/convex/bakedGoods.ts)`
 - Mutations: `createIteration`, `updateIteration` (optional), `deleteIteration`
 - Query: `getBakedGoodWithIterations`
 - Compute baked good stats in the query response (iteration count, avg rating, best rating, last baked date) — handle “no ratings” cleanly.
-
 - **Web**
 - Add page:
-- [`apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`](apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx)
+- `[apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx](apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx)`
 - Update baked good detail page to:
 - Show stats bar (avg/best/iteration count/last baked)
 - Show iteration cards (date, rating badge if present, difficulty, total time)
@@ -101,11 +100,10 @@ Replace the existing `recipes`/`variants` schema with `bakedGoods`/`recipeIterat
 - **Backend**
 - Add queries: `getIteration` (include photos list even if unused yet)
 - Ensure `updateIteration` supports all iteration fields.
-
 - **Web**
 - Add pages:
-- [`apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx`](apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx)
-- [`apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`](apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx)
+- `[apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx](apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx)`
+- `[apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx](apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx)`
 - Add markdown rendering for `recipeContent` (e.g. `react-markdown`).
 
 **Definition of done / smoke test**
@@ -121,7 +119,6 @@ Replace the existing `recipes`/`variants` schema with `bakedGoods`/`recipeIterat
 
 - **Backend**
 - Add mutation: `duplicateIteration` (copy recipeContent, difficulty, totalTime, sourceUrl; clear rating/notes/photos; bakeDate defaults to today).
-
 - **Web**
 - Add “Duplicate” action on iteration cards and/or iteration view.
 - Duplicate → navigates to create form prefilled OR creates immediately and routes to edit.
@@ -140,7 +137,6 @@ Replace the existing `recipes`/`variants` schema with `bakedGoods`/`recipeIterat
 - Implement storage + `iterationPhotos` mutations/queries:
 - upload/add photo (store storageId + order)
 - delete photo (remove record + storage)
-
 - **Web**
 - Add multi-upload UI to iteration create/edit.
 - Show gallery on iteration view; show thumbnail indicator on iteration cards.
@@ -157,7 +153,7 @@ Replace the existing `recipes`/`variants` schema with `bakedGoods`/`recipeIterat
 **User-visible feature:** Users can switch list vs timeline view and sort iterations.
 
 - **Web**
-- On [`apps/web/src/app/baked-goods/[id]/page.tsx`](apps/web/src/app/baked-goods/[id]/page.tsx)
+- On `[apps/web/src/app/baked-goods/[id]/page.tsx](apps/web/src/app/baked-goods/[id]/page.tsx)`
 - Toggle list/timeline
 - Sort by date and rating at minimum
 
