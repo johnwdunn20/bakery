@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowDown, ArrowUp, CalendarClock, Copy, Image, List, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, Clock, Copy, Image, Layers, List, Pencil, Plus, Star, Trophy, Trash2 } from "lucide-react";
 
 type ViewMode = "list" | "timeline";
 type SortOption = "date-desc" | "date-asc" | "rating-desc" | "rating-asc";
@@ -167,7 +167,7 @@ export default function BakedGoodDetailPage() {
 
   if (bakedGood === undefined) {
     return (
-      <div className="p-6 md:p-8 max-w-2xl space-y-4">
+      <div className="p-6 md:p-8 max-w-4xl space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-32 w-full" />
@@ -177,7 +177,7 @@ export default function BakedGoodDetailPage() {
 
   if (bakedGood === null) {
     return (
-      <div className="p-6 md:p-8 max-w-2xl">
+      <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Baked good not found.</p>
         <Button variant="link" onClick={() => router.push("/my-bakery")}>
           Back to My Bakery
@@ -204,11 +204,11 @@ export default function BakedGoodDetailPage() {
             {"firstPhotoUrl" in it && it.firstPhotoUrl ? (
               <img
                 src={it.firstPhotoUrl}
-                alt=""
+                alt={`Photo from ${formatDate(it.bakeDate)} bake`}
                 className="w-full h-full object-cover"
               />
             ) : (
-              <Image className="h-6 w-6 text-muted-foreground" aria-hidden />
+              <Image className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
             )}
           </div>
           <Link
@@ -275,7 +275,7 @@ export default function BakedGoodDetailPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-2xl space-y-8">
+    <div className="p-6 md:p-8 max-w-4xl space-y-8">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -292,7 +292,7 @@ export default function BakedGoodDetailPage() {
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{bakedGood.name}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{bakedGood.name}</h1>
           {bakedGood.description && (
             <p className="text-muted-foreground mt-1">{bakedGood.description}</p>
           )}
@@ -379,15 +379,34 @@ export default function BakedGoodDetailPage() {
       </div>
 
       {iterationCount > 0 && (
-        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-          <span>{iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}</span>
-          {avgRating != null && <span>Avg {avgRating.toFixed(1)}</span>}
-          {bestRating != null && <span>Best {bestRating}</span>}
-          <span>
-            {lastBakedDate != null
-              ? `Last baked ${formatDate(lastBakedDate)}`
-              : "Never baked"}
-          </span>
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">{iterationCount}</span>
+            <span className="text-sm text-muted-foreground">{iterationCount === 1 ? "iteration" : "iterations"}</span>
+          </div>
+          {avgRating != null && (
+            <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+              <span className="text-sm font-medium">{avgRating.toFixed(1)}</span>
+              <span className="text-sm text-muted-foreground">avg</span>
+            </div>
+          )}
+          {bestRating != null && (
+            <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium">{bestRating}/5</span>
+              <span className="text-sm text-muted-foreground">best</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">
+              {lastBakedDate != null
+                ? formatDate(lastBakedDate)
+                : "Never baked"}
+            </span>
+          </div>
         </div>
       )}
 

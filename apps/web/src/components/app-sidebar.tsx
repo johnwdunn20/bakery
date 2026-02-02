@@ -12,6 +12,7 @@ import {
   Settings,
   ChevronsUpDown,
   Home,
+  CakeSlice,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -87,20 +88,20 @@ export function AppSidebar() {
               ) : bakedGoods.length === 0 ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/baked-goods/new" className="text-muted-foreground italic">
+                    <Link href="/baked-goods/new" className="text-muted-foreground italic">
                       <Plus className="size-4" />
                       <span>Create your first baked good</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : (
                 bakedGoods.map((bg) => (
                   <SidebarMenuItem key={bg._id}>
                     <SidebarMenuButton asChild tooltip={bg.name}>
-                      <a href={`/baked-goods/${bg._id}`}>
-                        <span className="text-lg">🍞</span>
+                      <Link href={`/baked-goods/${bg._id}`}>
+                        <CakeSlice className="size-4" />
                         <span>{bg.name}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))
@@ -114,13 +115,13 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <a
+                <Link
                   href="/baked-goods/new"
                   className="bg-primary/10 hover:bg-primary/20 text-primary"
                 >
                   <Plus className="size-4" />
                   <span>New Baked Good</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -135,18 +136,18 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Baker's Math Calculator">
-                  <a href="/tools/calculator">
+                  <Link href="/tools/calculator">
                     <Calculator className="size-4" />
                     <span>Baker&apos;s Math</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Ingredient Substitutions">
-                  <a href="/tools/substitutions">
+                  <Link href="/tools/substitutions">
                     <ArrowLeftRight className="size-4" />
                     <span>Substitutions</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

@@ -110,10 +110,47 @@ export const listMyBakedGoods = query({
       .unique();
     if (!user) return [];
 
-    return await ctx.db
+    const bakedGoods = await ctx.db
       .query("bakedGoods")
       .withIndex("by_author", (q) => q.eq("authorId", user._id))
       .collect();
+
+    return await Promise.all(
+      bakedGoods.map(async (bg) => {
+        // Get the most recent iteration
+        const iterations = await ctx.db
+          .query("recipeIterations")
+          .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", bg._id))
+          .collect();
+
+        // Sort by bake date descending and get the most recent
+        const mostRecentIteration = iterations.sort(
+          (a, b) => b.bakeDate - a.bakeDate
+        )[0];
+
+        let firstPhotoUrl: string | null = null;
+        if (mostRecentIteration) {
+          // Get the first photo from the most recent iteration
+          const photos = await ctx.db
+            .query("iterationPhotos")
+            .withIndex("by_iteration", (q) =>
+              q.eq("iterationId", mostRecentIteration._id)
+            )
+            .collect();
+          photos.sort((a, b) => a.order - b.order);
+          const firstPhoto = photos[0];
+          if (firstPhoto) {
+            firstPhotoUrl = await ctx.storage.getUrl(firstPhoto.storageId);
+          }
+        }
+
+        return {
+          ...bg,
+          firstPhotoUrl,
+          iterationCount: iterations.length,
+        };
+      })
+    );
   },
 });
 

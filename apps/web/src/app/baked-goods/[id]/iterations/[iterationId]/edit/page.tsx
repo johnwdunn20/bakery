@@ -37,7 +37,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { StarRating } from "@/components/ui/star-rating";
-import { Trash2 } from "lucide-react";
+import { PhotoDropzone, PhotoGrid } from "@/components/ui/photo-dropzone";
+import { ArrowLeft, Trash2, X, Loader2 } from "lucide-react";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
@@ -149,15 +150,14 @@ export default function IterationEditPage() {
     }
   }
 
-  async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files?.length) return;
+  async function handleFilesSelected(files: FileList) {
     setUploadError(null);
     setIsUploading(true);
     const photoCount = iteration?.photos?.length ?? 0;
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        if (!file.type.startsWith("image/")) continue;
         const uploadUrl = await generateUploadUrl();
         const response = await fetch(uploadUrl, { method: "POST", body: file });
         if (!response.ok) throw new Error("Upload failed");
@@ -172,13 +172,12 @@ export default function IterationEditPage() {
       setUploadError(err instanceof Error ? err.message : "Failed to upload photos.");
     } finally {
       setIsUploading(false);
-      e.target.value = "";
     }
   }
 
   if (iteration === undefined) {
     return (
-      <div className="p-6 md:p-8 max-w-xl">
+      <div className="p-6 md:p-8 max-w-2xl">
         <Skeleton className="h-8 w-48 mb-4" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -187,7 +186,7 @@ export default function IterationEditPage() {
 
   if (iteration === null) {
     return (
-      <div className="p-6 md:p-8 max-w-xl">
+      <div className="p-6 md:p-8 max-w-2xl">
         <p className="text-muted-foreground">Iteration not found.</p>
         <Button variant="link" asChild>
           <Link href={id ? `/baked-goods/${id}` : "/my-bakery"}>
@@ -201,7 +200,7 @@ export default function IterationEditPage() {
 
   if (!initialized) {
     return (
-      <div className="p-6 md:p-8 max-w-xl">
+      <div className="p-6 md:p-8 max-w-2xl">
         <Skeleton className="h-8 w-48 mb-4" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -211,7 +210,7 @@ export default function IterationEditPage() {
   const bakedGoodName = bakedGood && "name" in bakedGood ? bakedGood.name : "Baked Good";
 
   return (
-    <div className="p-6 md:p-8 max-w-xl space-y-6">
+    <div className="p-6 md:p-8 max-w-2xl space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -378,16 +377,16 @@ export default function IterationEditPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {iteration.photos && iteration.photos.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <PhotoGrid>
               {iteration.photos.map((photo) => (
                 <div
                   key={photo._id}
-                  className="relative aspect-square rounded-lg overflow-hidden bg-muted"
+                  className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
                 >
                   {photo.url ? (
                     <img
                       src={photo.url}
-                      alt="Iteration"
+                      alt={`Photo of ${bakedGoodName}`}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -396,18 +395,19 @@ export default function IterationEditPage() {
                     </div>
                   )}
                   <Button
+                    type="button"
                     variant="destructive"
                     size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 opacity-90 hover:opacity-100"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     disabled={deletingPhotoId !== null || isSubmitting}
                     aria-label="Remove photo"
                     onClick={() => setPhotoToDelete(photo._id)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
-            </div>
+            </PhotoGrid>
           )}
 
           <AlertDialog open={photoToDelete !== null} onOpenChange={(open) => !open && setPhotoToDelete(null)}>
@@ -438,21 +438,18 @@ export default function IterationEditPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <div>
-            <Label htmlFor="photo-upload" className="sr-only">
-              Add photos
-            </Label>
-            <input
-              id="photo-upload"
-              type="file"
-              accept="image/*"
-              multiple
+          <div className="space-y-2">
+            <PhotoDropzone
+              onFilesSelected={handleFilesSelected}
               disabled={isUploading || isSubmitting}
-              onChange={handlePhotoSelect}
-              className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:text-sm file:font-medium"
             />
-            {isUploading && <p className="text-sm text-muted-foreground mt-2">Uploading…</p>}
-            {uploadError && <p className="text-sm text-destructive mt-2">{uploadError}</p>}
+            {isUploading && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Uploading photos...</span>
+              </div>
+            )}
+            {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
           </div>
         </CardContent>
       </Card>

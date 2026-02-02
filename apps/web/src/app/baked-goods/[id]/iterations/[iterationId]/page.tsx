@@ -31,7 +31,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Copy, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Pencil, Trash2, X } from "lucide-react";
+import { PhotoLightbox } from "@/components/ui/photo-lightbox";
+import { PhotoGrid } from "@/components/ui/photo-dropzone";
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -99,6 +101,8 @@ export default function IterationViewPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const iteration = useQuery(
     api.bakedGoods.getIteration,
     iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
@@ -110,7 +114,7 @@ export default function IterationViewPage() {
 
   if (iteration === undefined) {
     return (
-      <div className="p-6 md:p-8 max-w-2xl space-y-4">
+      <div className="p-6 md:p-8 max-w-4xl space-y-4">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-48 w-full" />
@@ -120,7 +124,7 @@ export default function IterationViewPage() {
 
   if (iteration === null) {
     return (
-      <div className="p-6 md:p-8 max-w-2xl">
+      <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Iteration not found.</p>
         <Button variant="link" asChild>
           <Link href={id ? `/baked-goods/${id}` : "/my-bakery"}>
@@ -136,7 +140,7 @@ export default function IterationViewPage() {
     bakedGood && "name" in bakedGood ? bakedGood.name : "Baked good";
 
   return (
-    <div className="p-6 md:p-8 max-w-2xl space-y-6">
+    <div className="p-6 md:p-8 max-w-4xl space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -242,7 +246,6 @@ export default function IterationViewPage() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </div>
       {duplicateError && (
         <p className="text-sm text-destructive">{duplicateError}</p>
       )}
@@ -280,17 +283,23 @@ export default function IterationViewPage() {
             <CardTitle className="text-base">Photos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {iteration.photos.map((photo) => (
+            <PhotoGrid>
+              {iteration.photos.map((photo, index) => (
                 <div
                   key={photo._id}
-                  className="relative aspect-square rounded-lg overflow-hidden bg-muted"
+                  className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
+                  onClick={() => {
+                    if (photo.url) {
+                      setLightboxIndex(index);
+                      setLightboxOpen(true);
+                    }
+                  }}
                 >
                   {photo.url ? (
                     <img
                       src={photo.url}
-                      alt="Iteration"
-                      className="w-full h-full object-cover"
+                      alt={`Photo ${index + 1} of ${bakedGoodName}`}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
@@ -298,21 +307,39 @@ export default function IterationViewPage() {
                     </div>
                   )}
                   <Button
+                    type="button"
                     variant="destructive"
                     size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 opacity-90 hover:opacity-100"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     disabled={deletingPhotoId !== null}
                     aria-label="Remove photo"
-                    onClick={() => setPhotoToDelete(photo._id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPhotoToDelete(photo._id);
+                    }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
-            </div>
+            </PhotoGrid>
           </CardContent>
         </Card>
       )}
+
+      <PhotoLightbox
+        photos={
+          iteration.photos
+            ?.filter((p) => p.url)
+            .map((p, i) => ({
+              url: p.url!,
+              alt: `Photo ${i + 1} of ${bakedGoodName}`,
+            })) ?? []
+        }
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+      />
 
       <AlertDialog open={photoToDelete !== null} onOpenChange={(open) => !open && setPhotoToDelete(null)}>
         <AlertDialogContent>

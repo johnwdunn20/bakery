@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
@@ -27,6 +27,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { StarRating } from "@/components/ui/star-rating";
+import { PhotoDropzone, PhotoGrid } from "@/components/ui/photo-dropzone";
+import { X, Check, Loader2, AlertCircle } from "lucide-react";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
@@ -36,6 +38,14 @@ function formatMinutes(min: number) {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+type UploadStatus = "pending" | "uploading" | "done" | "error";
+
+interface SelectedFile {
+  file: File;
+  previewUrl: string;
+  status: UploadStatus;
 }
 
 export default function NewIterationPage() {
@@ -49,7 +59,6 @@ export default function NewIterationPage() {
   const createIteration = useMutation(api.bakedGoods.createIteration);
   const generateUploadUrl = useMutation(api.bakedGoods.generateUploadUrl);
   const addIterationPhoto = useMutation(api.bakedGoods.addIterationPhoto);
-  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [recipeContent, setRecipeContent] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
@@ -60,6 +69,31 @@ export default function NewIterationPage() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+
+  function handleFilesSelected(files: FileList) {
+    const newFiles: SelectedFile[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith("image/")) {
+        newFiles.push({
+          file,
+          previewUrl: URL.createObjectURL(file),
+          status: "pending",
+        });
+      }
+    }
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  }
+
+  function removeSelectedFile(index: number) {
+    setSelectedFiles((prev) => {
+      const newFiles = [...prev];
+      URL.revokeObjectURL(newFiles[index].previewUrl);
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,7 +117,6 @@ export default function NewIterationPage() {
       return;
     }
     setIsSubmitting(true);
-    const files = photoInputRef.current?.files;
     try {
       const newId = await createIteration({
         bakedGoodId: bakedGoodId as Id<"bakedGoods">,
@@ -95,18 +128,33 @@ export default function NewIterationPage() {
         notes: notes.trim() || undefined,
         sourceUrl: sourceUrl.trim() || undefined,
       });
-      if (files?.length) {
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const uploadUrl = await generateUploadUrl();
-          const response = await fetch(uploadUrl, { method: "POST", body: file });
-          if (!response.ok) throw new Error("Upload failed");
-          const { storageId } = (await response.json()) as { storageId: string };
-          await addIterationPhoto({
-            iterationId: newId,
-            storageId: storageId as Id<"_storage">,
-            order: i,
-          });
+      if (selectedFiles.length > 0) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          // Mark as uploading
+          setSelectedFiles((prev) =>
+            prev.map((f, idx) => (idx === i ? { ...f, status: "uploading" as UploadStatus } : f))
+          );
+          try {
+            const { file } = selectedFiles[i];
+            const uploadUrl = await generateUploadUrl();
+            const response = await fetch(uploadUrl, { method: "POST", body: file });
+            if (!response.ok) throw new Error("Upload failed");
+            const { storageId } = (await response.json()) as { storageId: string };
+            await addIterationPhoto({
+              iterationId: newId,
+              storageId: storageId as Id<"_storage">,
+              order: i,
+            });
+            // Mark as done
+            setSelectedFiles((prev) =>
+              prev.map((f, idx) => (idx === i ? { ...f, status: "done" as UploadStatus } : f))
+            );
+          } catch {
+            // Mark as error but continue
+            setSelectedFiles((prev) =>
+              prev.map((f, idx) => (idx === i ? { ...f, status: "error" as UploadStatus } : f))
+            );
+          }
         }
       }
       router.push(`/baked-goods/${bakedGoodId}/iterations/${newId}`);
@@ -118,7 +166,7 @@ export default function NewIterationPage() {
 
   if (bakedGood === undefined) {
     return (
-      <div className="p-6 md:p-8 max-w-xl">
+      <div className="p-6 md:p-8 max-w-2xl">
         <Skeleton className="h-8 w-48 mb-4" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -127,7 +175,7 @@ export default function NewIterationPage() {
 
   if (bakedGood === null) {
     return (
-      <div className="p-6 md:p-8 max-w-xl">
+      <div className="p-6 md:p-8 max-w-2xl">
         <p className="text-muted-foreground">Baked good not found.</p>
         <Button variant="link" asChild>
           <Link href="/my-bakery">Back to My Bakery</Link>
@@ -137,7 +185,7 @@ export default function NewIterationPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-xl space-y-6">
+    <div className="p-6 md:p-8 max-w-2xl space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -274,16 +322,56 @@ export default function NewIterationPage() {
                 disabled={isSubmitting}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="photo-upload">Photos (optional)</Label>
-              <input
-                ref={photoInputRef}
-                id="photo-upload"
-                type="file"
-                accept="image/*"
-                multiple
+            <div className="space-y-3">
+              <Label>Photos (optional)</Label>
+              {selectedFiles.length > 0 && (
+                <PhotoGrid>
+                  {selectedFiles.map((sf, index) => (
+                    <div
+                      key={index}
+                      className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
+                    >
+                      <img
+                        src={sf.previewUrl}
+                        alt={`Selected photo ${index + 1}`}
+                        className={`w-full h-full object-cover ${sf.status === "uploading" ? "opacity-50" : ""}`}
+                      />
+                      {/* Upload status indicator */}
+                      {sf.status === "uploading" && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <Loader2 className="h-8 w-8 text-white animate-spin" />
+                        </div>
+                      )}
+                      {sf.status === "done" && (
+                        <div className="absolute bottom-2 left-2 rounded-full bg-green-500 p-1">
+                          <Check className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      {sf.status === "error" && (
+                        <div className="absolute bottom-2 left-2 rounded-full bg-destructive p-1">
+                          <AlertCircle className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      {/* Remove button - only show when not submitting */}
+                      {!isSubmitting && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeSelectedFile(index)}
+                          aria-label="Remove photo"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </PhotoGrid>
+              )}
+              <PhotoDropzone
+                onFilesSelected={handleFilesSelected}
                 disabled={isSubmitting}
-                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:text-sm file:font-medium"
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
