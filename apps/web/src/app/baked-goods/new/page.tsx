@@ -46,7 +46,7 @@ export default function NewBakedGoodPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-2xl">
+    <div className="p-6 md:p-8 max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle>New Baked Good</CardTitle>

@@ -31,7 +31,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, Copy, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, Copy, Loader2, Pencil, Trash2, X } from "lucide-react";
 import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 import { PhotoGrid } from "@/components/ui/photo-dropzone";
 
@@ -165,7 +165,11 @@ export default function IterationViewPage() {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="outline" disabled={isDuplicating}>
-                <Copy className="mr-2 h-4 w-4" />
+                {isDuplicating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Copy className="mr-2 h-4 w-4" />
+                )}
                 {isDuplicating ? "Duplicating…" : "Duplicate"}
               </Button>
             </AlertDialogTrigger>
@@ -209,7 +213,11 @@ export default function IterationViewPage() {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive" disabled={isDeleting}>
-                <Trash2 className="mr-2 h-4 w-4" />
+                {isDeleting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
                 {isDeleting ? "Deleting…" : "Delete"}
               </Button>
             </AlertDialogTrigger>

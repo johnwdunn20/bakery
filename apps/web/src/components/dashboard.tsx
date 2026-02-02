@@ -1,17 +1,30 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks";
-import { Plus, ChefHat, Clock, Image } from "lucide-react";
+import { Plus, ChefHat, Clock, Image, Search } from "lucide-react";
 
 export function Dashboard() {
   const { user, isLoading: userLoading } = useCurrentUser();
   const bakedGoods = useQuery(api.bakedGoods.listMyBakedGoods);
+  const [search, setSearch] = useState("");
+
+  const filteredBakedGoods = useMemo(() => {
+    if (!bakedGoods || !search.trim()) return bakedGoods;
+    const query = search.toLowerCase();
+    return bakedGoods.filter(
+      (bg) =>
+        bg.name.toLowerCase().includes(query) ||
+        bg.description?.toLowerCase().includes(query)
+    );
+  }, [bakedGoods, search]);
 
   const firstName = user?.name?.split(" ")[0] || user?.username || "Baker";
 
@@ -27,13 +40,24 @@ export function Dashboard() {
         )}
       </div>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button asChild size="lg" className="rounded-full">
           <Link href="/baked-goods/new">
             <Plus className="mr-2 h-5 w-5" />
             New Baked Good
           </Link>
         </Button>
+        {bakedGoods && bakedGoods.length > 0 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search baked goods..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 w-64"
+            />
+          </div>
+        )}
       </div>
 
       <div>
@@ -49,7 +73,7 @@ export function Dashboard() {
               </Card>
             ))}
           </div>
-        ) : bakedGoods.length === 0 ? (
+        ) : filteredBakedGoods && filteredBakedGoods.length === 0 && !search ? (
           <Card className="border-dashed">
             <CardHeader className="text-center py-12">
               <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -70,9 +94,20 @@ export function Dashboard() {
               </Button>
             </CardFooter>
           </Card>
+        ) : filteredBakedGoods && filteredBakedGoods.length === 0 && search ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No baked goods matching &quot;{search}&quot;</p>
+            <Button
+              variant="link"
+              onClick={() => setSearch("")}
+              className="mt-2"
+            >
+              Clear search
+            </Button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bakedGoods.map((bg) => (
+            {filteredBakedGoods?.map((bg) => (
               <Link key={bg._id} href={`/baked-goods/${bg._id}`}>
                 <Card className="overflow-hidden group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer h-full">
                   <div className="h-48 relative bg-muted overflow-hidden">

@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowDown, ArrowUp, CalendarClock, Clock, Copy, Image, Layers, List, Pencil, Plus, Star, Trophy, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, Copy, Image, List, Loader2, Pencil, Plus, Star, Trash2 } from "lucide-react";
 
 type ViewMode = "list" | "timeline";
 type SortOption = "date-desc" | "date-asc" | "rating-desc" | "rating-asc";
@@ -187,8 +187,6 @@ export default function BakedGoodDetailPage() {
   }
 
   const iterationCount = bakedGood.iterationCount ?? 0;
-  const avgRating = bakedGood.avgRating ?? null;
-  const bestRating = bakedGood.bestRating ?? null;
   const lastBakedDate = bakedGood.lastBakedDate ?? null;
   const hasIterations = sortedIterations.length > 0;
 
@@ -200,7 +198,7 @@ export default function BakedGoodDetailPage() {
     return (
       <Card className="border bg-card transition-colors hover:bg-accent/50">
         <CardContent className="p-4 flex items-start gap-3">
-          <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+          <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
             {"firstPhotoUrl" in it && it.firstPhotoUrl ? (
               <img
                 src={it.firstPhotoUrl}
@@ -275,7 +273,7 @@ export default function BakedGoodDetailPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl space-y-8">
+    <div className="p-6 md:p-8 max-w-4xl space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -291,11 +289,13 @@ export default function BakedGoodDetailPage() {
       </Breadcrumb>
 
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{bakedGood.name}</h1>
-          {bakedGood.description && (
-            <p className="text-muted-foreground mt-1">{bakedGood.description}</p>
-          )}
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{bakedGood.name}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {bakedGood.description && <>{bakedGood.description} · </>}
+            {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}
+            {lastBakedDate != null && <> · Last baked {formatDate(lastBakedDate)}</>}
+          </p>
         </div>
         <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
           <SheetTrigger asChild>
@@ -342,6 +342,7 @@ export default function BakedGoodDetailPage() {
                 disabled={isUpdating || isDeleting}
                 className="w-full"
               >
+                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isUpdating ? "Saving..." : "Save changes"}
               </Button>
               <AlertDialog>
@@ -351,7 +352,11 @@ export default function BakedGoodDetailPage() {
                     disabled={isUpdating || isDeleting}
                     className="w-full"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    {isDeleting ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    )}
                     {isDeleting ? "Deleting..." : "Delete Baked Good"}
                   </Button>
                 </AlertDialogTrigger>
@@ -377,38 +382,6 @@ export default function BakedGoodDetailPage() {
           </SheetContent>
         </Sheet>
       </div>
-
-      {iterationCount > 0 && (
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-            <Layers className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{iterationCount}</span>
-            <span className="text-sm text-muted-foreground">{iterationCount === 1 ? "iteration" : "iterations"}</span>
-          </div>
-          {avgRating != null && (
-            <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-sm font-medium">{avgRating.toFixed(1)}</span>
-              <span className="text-sm text-muted-foreground">avg</span>
-            </div>
-          )}
-          {bestRating != null && (
-            <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-              <Trophy className="h-4 w-4 text-amber-500" />
-              <span className="text-sm font-medium">{bestRating}/5</span>
-              <span className="text-sm text-muted-foreground">best</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {lastBakedDate != null
-                ? formatDate(lastBakedDate)
-                : "Never baked"}
-            </span>
-          </div>
-        </div>
-      )}
 
       <Card>
         <CardHeader className={hasIterations ? "flex flex-row items-start justify-between space-y-0" : undefined}>
@@ -509,7 +482,7 @@ export default function BakedGoodDetailPage() {
                   {sortedIterations.map((it) => (
                     <div key={it._id} className="relative pb-6 last:pb-0">
                       <span
-                        className="absolute left-[-29px] top-5 size-3 rounded-full border-2 border-background bg-primary shadow-sm -translate-x-1/2"
+                        className="absolute left-[calc(-1.5rem-1px)] top-5 size-3 rounded-full border-2 border-background bg-primary shadow-sm -translate-x-1/2"
                         aria-hidden
                       />
                       <div className="pt-0.5">

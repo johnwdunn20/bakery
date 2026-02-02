@@ -38,7 +38,20 @@ import {
 } from "@/components/ui/breadcrumb";
 import { StarRating } from "@/components/ui/star-rating";
 import { PhotoDropzone, PhotoGrid } from "@/components/ui/photo-dropzone";
-import { ArrowLeft, Trash2, X, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ArrowLeft, CalendarIcon, Trash2, X, Loader2 } from "lucide-react";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
@@ -177,7 +190,7 @@ export default function IterationEditPage() {
 
   if (iteration === undefined) {
     return (
-      <div className="p-6 md:p-8 max-w-2xl">
+      <div className="p-6 md:p-8 max-w-4xl">
         <Skeleton className="h-8 w-48 mb-4" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -186,7 +199,7 @@ export default function IterationEditPage() {
 
   if (iteration === null) {
     return (
-      <div className="p-6 md:p-8 max-w-2xl">
+      <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Iteration not found.</p>
         <Button variant="link" asChild>
           <Link href={id ? `/baked-goods/${id}` : "/my-bakery"}>
@@ -200,7 +213,7 @@ export default function IterationEditPage() {
 
   if (!initialized) {
     return (
-      <div className="p-6 md:p-8 max-w-2xl">
+      <div className="p-6 md:p-8 max-w-4xl">
         <Skeleton className="h-8 w-48 mb-4" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -210,7 +223,7 @@ export default function IterationEditPage() {
   const bakedGoodName = bakedGood && "name" in bakedGood ? bakedGood.name : "Baked Good";
 
   return (
-    <div className="p-6 md:p-8 max-w-2xl space-y-6">
+    <div className="p-6 md:p-8 max-w-4xl space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -259,22 +272,28 @@ export default function IterationEditPage() {
                 required
                 disabled={isSubmitting}
               />
+              <p className="text-xs text-muted-foreground">
+                Supports Markdown: **bold**, *italic*, - lists, ## headings
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty</Label>
-              <select
-                id="difficulty"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              <Label>Difficulty</Label>
+              <Select
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
+                onValueChange={setDifficulty}
                 disabled={isSubmitting}
               >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DIFFICULTIES.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="totalTime">Total time (minutes)</Label>
@@ -304,16 +323,36 @@ export default function IterationEditPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bakeDate">Bake date</Label>
+              <Label>Bake date</Label>
               <div className="flex gap-2">
-                <Input
-                  id="bakeDate"
-                  type="date"
-                  value={bakeDate}
-                  onChange={(e) => setBakeDate(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                      disabled={isSubmitting}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {bakeDate
+                        ? new Date(bakeDate).toLocaleDateString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={bakeDate ? new Date(bakeDate) : undefined}
+                      onSelect={(date) =>
+                        setBakeDate(date ? date.toISOString().slice(0, 10) : "")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <Button
                   type="button"
                   variant="outline"
