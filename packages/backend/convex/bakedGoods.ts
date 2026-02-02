@@ -124,18 +124,14 @@ export const listMyBakedGoods = query({
           .collect();
 
         // Sort by bake date descending and get the most recent
-        const mostRecentIteration = iterations.sort(
-          (a, b) => b.bakeDate - a.bakeDate
-        )[0];
+        const mostRecentIteration = iterations.sort((a, b) => b.bakeDate - a.bakeDate)[0];
 
         let firstPhotoUrl: string | null = null;
         if (mostRecentIteration) {
           // Get the first photo from the most recent iteration
           const photos = await ctx.db
             .query("iterationPhotos")
-            .withIndex("by_iteration", (q) =>
-              q.eq("iterationId", mostRecentIteration._id)
-            )
+            .withIndex("by_iteration", (q) => q.eq("iterationId", mostRecentIteration._id))
             .collect();
           photos.sort((a, b) => a.order - b.order);
           const firstPhoto = photos[0];
@@ -175,9 +171,7 @@ export const getBakedGoodWithIterations = query({
           .collect();
         photos.sort((a, b) => a.order - b.order);
         const firstPhoto = photos[0] ?? null;
-        const firstPhotoUrl = firstPhoto
-          ? await ctx.storage.getUrl(firstPhoto.storageId)
-          : null;
+        const firstPhotoUrl = firstPhoto ? await ctx.storage.getUrl(firstPhoto.storageId) : null;
         return {
           ...it,
           photoCount: photos.length,
@@ -186,14 +180,13 @@ export const getBakedGoodWithIterations = query({
       })
     );
 
-    const ratings = iterations
-      .map((i) => i.rating)
-      .filter((r): r is number => r != null);
+    const ratings = iterations.map((i) => i.rating).filter((r): r is number => r != null);
     const iterationCount = iterations.length;
     const avgRating =
       ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : null;
     const bestRating = ratings.length > 0 ? Math.max(...ratings) : null;
-    const lastBakedDate = iterations.length > 0 ? Math.max(...iterations.map((i) => i.bakeDate)) : null;
+    const lastBakedDate =
+      iterations.length > 0 ? Math.max(...iterations.map((i) => i.bakeDate)) : null;
 
     return {
       ...bakedGood,
@@ -291,9 +284,7 @@ export const addIterationPhoto = mutation({
       .withIndex("by_iteration", (q) => q.eq("iterationId", args.iterationId))
       .collect();
     const maxOrder =
-      existingPhotos.length > 0
-        ? Math.max(...existingPhotos.map((p) => p.order))
-        : -1;
+      existingPhotos.length > 0 ? Math.max(...existingPhotos.map((p) => p.order)) : -1;
     const order = args.order ?? maxOrder + 1;
     const now = Date.now();
 

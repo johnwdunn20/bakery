@@ -172,11 +172,7 @@ export function PhotoLightbox({
               aria-label={`View photo ${index + 1}`}
               aria-current={index === currentIndex ? "true" : undefined}
             >
-              <img
-                src={photo.url}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+              <img src={photo.url} alt="" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

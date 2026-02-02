@@ -51,32 +51,15 @@ function formatMinutes(min: number) {
 }
 
 const markdownComponents: Components = {
-  h1: ({ children }) => (
-    <h1 className="mt-6 mb-3 text-2xl font-bold first:mt-0">{children}</h1>
-  ),
-  h2: ({ children }) => (
-    <h2 className="mt-5 mb-2 text-xl font-bold">{children}</h2>
-  ),
-  h3: ({ children }) => (
-    <h3 className="mt-4 mb-2 text-lg font-semibold">{children}</h3>
-  ),
-  p: ({ children }) => (
-    <p className="mb-3 leading-relaxed last:mb-0">{children}</p>
-  ),
-  ul: ({ children }) => (
-    <ul className="mb-3 list-disc pl-6 space-y-1">{children}</ul>
-  ),
-  ol: ({ children }) => (
-    <ol className="mb-3 list-decimal pl-6 space-y-1">{children}</ol>
-  ),
-  li: ({ children }) => (
-    <li className="leading-relaxed">{children}</li>
-  ),
+  h1: ({ children }) => <h1 className="mt-6 mb-3 text-2xl font-bold first:mt-0">{children}</h1>,
+  h2: ({ children }) => <h2 className="mt-5 mb-2 text-xl font-bold">{children}</h2>,
+  h3: ({ children }) => <h3 className="mt-4 mb-2 text-lg font-semibold">{children}</h3>,
+  p: ({ children }) => <p className="mb-3 leading-relaxed last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="mb-3 list-disc pl-6 space-y-1">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-3 list-decimal pl-6 space-y-1">{children}</ol>,
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   code: ({ className, children, ...props }) => (
-    <code
-      className={className ?? "rounded bg-muted px-1.5 py-0.5 font-mono text-sm"}
-      {...props}
-    >
+    <code className={className ?? "rounded bg-muted px-1.5 py-0.5 font-mono text-sm"} {...props}>
       {children}
     </code>
   ),
@@ -136,8 +119,7 @@ export default function IterationViewPage() {
     );
   }
 
-  const bakedGoodName =
-    bakedGood && "name" in bakedGood ? bakedGood.name : "Baked good";
+  const bakedGoodName = bakedGood && "name" in bakedGood ? bakedGood.name : "Baked good";
 
   return (
     <div className="p-6 md:p-8 max-w-4xl space-y-6">
@@ -162,109 +144,100 @@ export default function IterationViewPage() {
       </Breadcrumb>
 
       <div className="flex flex-wrap items-center gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button size="sm" variant="outline" disabled={isDuplicating}>
-                {isDuplicating ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Copy className="mr-2 h-4 w-4" />
-                )}
-                {isDuplicating ? "Duplicating…" : "Duplicate"}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will create a new iteration with today's date, copying the recipe content, difficulty, and time. You can edit it before saving.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={async () => {
-                    setDuplicateError(null);
-                    setIsDuplicating(true);
-                    try {
-                      const newId = await duplicateIteration({
-                        id: iterationId as Id<"recipeIterations">,
-                      });
-                      router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
-                    } catch (err) {
-                      setDuplicateError(
-                        err instanceof Error ? err.message : "Failed to duplicate."
-                      );
-                      setIsDuplicating(false);
-                    }
-                  }}
-                >
-                  Duplicate
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <Button size="sm" asChild>
-            <Link href={`/baked-goods/${id}/iterations/${iterationId}/edit`}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button size="sm" variant="destructive" disabled={isDeleting}>
-                {isDeleting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="mr-2 h-4 w-4" />
-                )}
-                {isDeleting ? "Deleting…" : "Delete"}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete iteration?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete this bake iteration. This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={async () => {
-                    setDeleteError(null);
-                    setIsDeleting(true);
-                    try {
-                      await deleteIteration({
-                        id: iterationId as Id<"recipeIterations">,
-                      });
-                      router.push(`/baked-goods/${id}`);
-                    } catch (err) {
-                      setDeleteError(
-                        err instanceof Error ? err.message : "Failed to delete."
-                      );
-                      setIsDeleting(false);
-                    }
-                  }}
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      {duplicateError && (
-        <p className="text-sm text-destructive">{duplicateError}</p>
-      )}
-      {deleteError && (
-        <p className="text-sm text-destructive">{deleteError}</p>
-      )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" variant="outline" disabled={isDuplicating}>
+              {isDuplicating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Copy className="mr-2 h-4 w-4" />
+              )}
+              {isDuplicating ? "Duplicating…" : "Duplicate"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will create a new iteration with today's date, copying the recipe content,
+                difficulty, and time. You can edit it before saving.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  setDuplicateError(null);
+                  setIsDuplicating(true);
+                  try {
+                    const newId = await duplicateIteration({
+                      id: iterationId as Id<"recipeIterations">,
+                    });
+                    router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+                  } catch (err) {
+                    setDuplicateError(err instanceof Error ? err.message : "Failed to duplicate.");
+                    setIsDuplicating(false);
+                  }
+                }}
+              >
+                Duplicate
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Button size="sm" asChild>
+          <Link href={`/baked-goods/${id}/iterations/${iterationId}/edit`}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </Link>
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" variant="destructive" disabled={isDeleting}>
+              {isDeleting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              {isDeleting ? "Deleting…" : "Delete"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete iteration?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete this bake iteration. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                  setDeleteError(null);
+                  setIsDeleting(true);
+                  try {
+                    await deleteIteration({
+                      id: iterationId as Id<"recipeIterations">,
+                    });
+                    router.push(`/baked-goods/${id}`);
+                  } catch (err) {
+                    setDeleteError(err instanceof Error ? err.message : "Failed to delete.");
+                    setIsDeleting(false);
+                  }
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+      {duplicateError && <p className="text-sm text-destructive">{duplicateError}</p>}
+      {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">
-          {formatDate(iteration.bakeDate)}
-        </span>
+        <span className="font-medium text-foreground">{formatDate(iteration.bakeDate)}</span>
         {iteration.rating != null && (
           <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
             {iteration.rating}/5
@@ -349,13 +322,14 @@ export default function IterationViewPage() {
         onOpenChange={setLightboxOpen}
       />
 
-      <AlertDialog open={photoToDelete !== null} onOpenChange={(open) => !open && setPhotoToDelete(null)}>
+      <AlertDialog
+        open={photoToDelete !== null}
+        onOpenChange={(open) => !open && setPhotoToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete photo?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This photo will be permanently deleted.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This photo will be permanently deleted.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -384,9 +358,7 @@ export default function IterationViewPage() {
             <CardTitle className="text-base">Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-              {iteration.notes}
-            </p>
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{iteration.notes}</p>
           </CardContent>
         </Card>
       )}
@@ -397,10 +369,7 @@ export default function IterationViewPage() {
         </CardHeader>
         <CardContent>
           <div className="prose-recipe min-w-0">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={markdownComponents}
-            >
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {iteration.recipeContent}
             </ReactMarkdown>
           </div>

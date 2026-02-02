@@ -8,8 +8,8 @@ export default function SubstitutionsPage() {
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Ingredient Substitutions</h1>
         <p className="text-muted-foreground max-w-2xl">
-          Never let a missing ingredient stop your bake. Search for common substitutions 
-          and alternatives.
+          Never let a missing ingredient stop your bake. Search for common substitutions and
+          alternatives.
         </p>
       </div>
       <SubstitutionSearch />

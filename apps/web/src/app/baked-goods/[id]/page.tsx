@@ -45,7 +45,19 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowDown, ArrowUp, CalendarClock, Copy, Image, List, Loader2, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  CalendarClock,
+  Copy,
+  Image,
+  List,
+  Loader2,
+  Pencil,
+  Plus,
+  Star,
+  Trash2,
+} from "lucide-react";
 
 type ViewMode = "list" | "timeline";
 type SortOption = "date-desc" | "date-asc" | "rating-desc" | "rating-asc";
@@ -190,11 +202,7 @@ export default function BakedGoodDetailPage() {
   const lastBakedDate = bakedGood.lastBakedDate ?? null;
   const hasIterations = sortedIterations.length > 0;
 
-  function IterationCard({
-    it,
-  }: {
-    it: (typeof sortedIterations)[number];
-  }) {
+  function IterationCard({ it }: { it: (typeof sortedIterations)[number] }) {
     return (
       <Card className="border bg-card transition-colors hover:bg-accent/50">
         <CardContent className="p-4 flex items-start gap-3">
@@ -245,7 +253,8 @@ export default function BakedGoodDetailPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will create a new iteration with today's date, copying the recipe content, difficulty, and time. You can edit it before saving.
+                  This will create a new iteration with today's date, copying the recipe content,
+                  difficulty, and time. You can edit it before saving.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -331,9 +340,7 @@ export default function BakedGoodDetailPage() {
                   disabled={isUpdating || isDeleting}
                 />
               </div>
-              {updateError && (
-                <p className="text-sm text-destructive">{updateError}</p>
-              )}
+              {updateError && <p className="text-sm text-destructive">{updateError}</p>}
             </div>
             <SheetFooter className="flex-col gap-2 sm:flex-col">
               <Button
@@ -363,7 +370,9 @@ export default function BakedGoodDetailPage() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete this baked good?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete &quot;{bakedGood.name}&quot; and all {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}. This action cannot be undone.
+                      This will permanently delete &quot;{bakedGood.name}&quot; and all{" "}
+                      {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}. This
+                      action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -383,7 +392,11 @@ export default function BakedGoodDetailPage() {
       </div>
 
       <Card>
-        <CardHeader className={hasIterations ? "flex flex-row items-start justify-between space-y-0" : undefined}>
+        <CardHeader
+          className={
+            hasIterations ? "flex flex-row items-start justify-between space-y-0" : undefined
+          }
+        >
           <div>
             <CardTitle>Iterations</CardTitle>
             <CardDescription>
@@ -413,7 +426,11 @@ export default function BakedGoodDetailPage() {
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2 mb-4">
-                <div className="flex rounded-md border border-input bg-transparent p-0.5" role="group" aria-label="View mode">
+                <div
+                  className="flex rounded-md border border-input bg-transparent p-0.5"
+                  role="group"
+                  aria-label="View mode"
+                >
                   <Button
                     type="button"
                     variant={viewMode === "list" ? "secondary" : "ghost"}

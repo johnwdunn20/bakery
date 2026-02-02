@@ -11,12 +11,7 @@ interface StarRatingProps {
   className?: string;
 }
 
-export function StarRating({
-  value,
-  onChange,
-  disabled = false,
-  className,
-}: StarRatingProps) {
+export function StarRating({ value, onChange, disabled = false, className }: StarRatingProps) {
   const [hoverValue, setHoverValue] = React.useState<number | null>(null);
 
   const displayValue = hoverValue ?? value ?? 0;
@@ -77,9 +72,7 @@ export function StarRating({
           </button>
         );
       })}
-      {value && (
-        <span className="ml-2 text-sm text-muted-foreground">{value}/5</span>
-      )}
+      {value && <span className="ml-2 text-sm text-muted-foreground">{value}/5</span>}
     </div>
   );
 }

@@ -20,9 +20,7 @@ export function Dashboard() {
     if (!bakedGoods || !search.trim()) return bakedGoods;
     const query = search.toLowerCase();
     return bakedGoods.filter(
-      (bg) =>
-        bg.name.toLowerCase().includes(query) ||
-        bg.description?.toLowerCase().includes(query)
+      (bg) => bg.name.toLowerCase().includes(query) || bg.description?.toLowerCase().includes(query)
     );
   }, [bakedGoods, search]);
 
@@ -97,11 +95,7 @@ export function Dashboard() {
         ) : filteredBakedGoods && filteredBakedGoods.length === 0 && search ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No baked goods matching &quot;{search}&quot;</p>
-            <Button
-              variant="link"
-              onClick={() => setSearch("")}
-              className="mt-2"
-            >
+            <Button variant="link" onClick={() => setSearch("")} className="mt-2">
               Clear search
             </Button>
           </div>
@@ -137,7 +131,10 @@ export function Dashboard() {
                     {new Date(bg.updatedAt).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
-                      year: new Date(bg.updatedAt).getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+                      year:
+                        new Date(bg.updatedAt).getFullYear() !== new Date().getFullYear()
+                          ? "numeric"
+                          : undefined,
                     })}
                   </CardFooter>
                 </Card>

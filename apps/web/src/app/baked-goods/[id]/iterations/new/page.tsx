@@ -36,11 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { X, Check, Loader2, AlertCircle, CalendarIcon } from "lucide-react";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
@@ -223,7 +219,8 @@ export default function NewIterationPage() {
         <CardHeader>
           <CardTitle>Add iteration</CardTitle>
           <CardDescription>
-            Record a bake of <strong>{bakedGood.name}</strong>. Recipe content, difficulty, total time, and bake date are required.
+            Record a bake of <strong>{bakedGood.name}</strong>. Recipe content, difficulty, total
+            time, and bake date are required.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -245,11 +242,7 @@ export default function NewIterationPage() {
             </div>
             <div className="space-y-2">
               <Label>Difficulty</Label>
-              <Select
-                value={difficulty}
-                onValueChange={setDifficulty}
-                disabled={isSubmitting}
-              >
+              <Select value={difficulty} onValueChange={setDifficulty} disabled={isSubmitting}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select difficulty" />
                 </SelectTrigger>
@@ -313,9 +306,7 @@ export default function NewIterationPage() {
                     <Calendar
                       mode="single"
                       selected={bakeDate ? new Date(bakeDate) : undefined}
-                      onSelect={(date) =>
-                        setBakeDate(date ? date.toISOString().slice(0, 10) : "")
-                      }
+                      onSelect={(date) => setBakeDate(date ? date.toISOString().slice(0, 10) : "")}
                       initialFocus
                     />
                   </PopoverContent>
@@ -333,11 +324,7 @@ export default function NewIterationPage() {
             </div>
             <div className="space-y-2">
               <Label>Rating (optional)</Label>
-              <StarRating
-                value={rating}
-                onChange={setRating}
-                disabled={isSubmitting}
-              />
+              <StarRating value={rating} onChange={setRating} disabled={isSubmitting} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optional)</Label>
@@ -408,10 +395,7 @@ export default function NewIterationPage() {
                   ))}
                 </PhotoGrid>
               )}
-              <PhotoDropzone
-                onFilesSelected={handleFilesSelected}
-                disabled={isSubmitting}
-              />
+              <PhotoDropzone onFilesSelected={handleFilesSelected} disabled={isSubmitting} />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>

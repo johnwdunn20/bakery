@@ -123,16 +123,9 @@ export function PhotoPreview({
 }: PhotoPreviewProps) {
   return (
     <div
-      className={cn(
-        "relative aspect-square rounded-lg overflow-hidden bg-muted group",
-        className
-      )}
+      className={cn("relative aspect-square rounded-lg overflow-hidden bg-muted group", className)}
     >
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-cover"
-      />
+      <img src={src} alt={alt} className="w-full h-full object-cover" />
       {onRemove && (
         <Button
           type="button"
@@ -159,9 +152,5 @@ interface PhotoGridProps {
 }
 
 export function PhotoGrid({ children, className }: PhotoGridProps) {
-  return (
-    <div className={cn("grid grid-cols-2 sm:grid-cols-3 gap-3", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("grid grid-cols-2 sm:grid-cols-3 gap-3", className)}>{children}</div>;
 }

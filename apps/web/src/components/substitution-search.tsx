@@ -47,9 +47,7 @@ export function SubstitutionSearch() {
                 </div>
                 <p className="text-primary font-medium">{item.substitute}</p>
                 {item.notes && (
-                  <p className="text-sm text-muted-foreground mt-2 italic">
-                    Note: {item.notes}
-                  </p>
+                  <p className="text-sm text-muted-foreground mt-2 italic">Note: {item.notes}</p>
                 )}
               </div>
             ))
