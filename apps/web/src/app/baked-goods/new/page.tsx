@@ -79,7 +79,7 @@ export default function NewBakedGoodPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>
-          <CardFooter className="gap-2">
+          <CardFooter className="gap-2 pt-6">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating…" : "Create Baked Good"}
             </Button>

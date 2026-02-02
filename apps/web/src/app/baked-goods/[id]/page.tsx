@@ -237,7 +237,6 @@ export default function BakedGoodDetailPage() {
                 size="icon"
                 disabled={duplicatingId !== null}
                 aria-label="Duplicate iteration"
-                onClick={(e) => e.preventDefault()}
               >
                 <Copy className="h-4 w-4" />
               </Button>
