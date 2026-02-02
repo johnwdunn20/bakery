@@ -28,13 +28,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { StarRating } from "@/components/ui/star-rating";
+import { Trash2 } from "lucide-react";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
 
 function formatDateForInput(ts: number) {
   const d = new Date(ts);
   return d.toISOString().slice(0, 10);
+}
+
+function formatMinutes(min: number) {
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function formatDate(ts: number) {
+  return new Date(ts).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 export default function IterationEditPage() {
@@ -51,11 +76,16 @@ export default function IterationEditPage() {
   const addIterationPhoto = useMutation(api.bakedGoods.addIterationPhoto);
   const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
 
+  const bakedGood = useQuery(
+    api.bakedGoods.getBakedGoodWithIterations,
+    id ? { id: id as Id<"bakedGoods"> } : "skip"
+  );
+
   const [recipeContent, setRecipeContent] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
   const [totalTime, setTotalTime] = useState("");
   const [bakeDate, setBakeDate] = useState("");
-  const [rating, setRating] = useState("");
+  const [rating, setRating] = useState<number | undefined>(undefined);
   const [notes, setNotes] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,7 +102,7 @@ export default function IterationEditPage() {
       setDifficulty(iteration.difficulty ?? "Medium");
       setTotalTime(String(iteration.totalTime ?? ""));
       setBakeDate(formatDateForInput(iteration.bakeDate));
-      setRating(iteration.rating != null ? String(iteration.rating) : "");
+      setRating(iteration.rating ?? undefined);
       setNotes(iteration.notes ?? "");
       setSourceUrl(iteration.sourceUrl ?? "");
       setInitialized(true);
@@ -100,11 +130,6 @@ export default function IterationEditPage() {
       setError("Invalid bake date.");
       return;
     }
-    const ratingNum = rating ? parseInt(rating, 10) : undefined;
-    if (rating !== "" && (Number.isNaN(ratingNum!) || ratingNum! < 1 || ratingNum! > 5)) {
-      setError("Rating must be between 1 and 5.");
-      return;
-    }
     setIsSubmitting(true);
     try {
       await updateIteration({
@@ -113,7 +138,7 @@ export default function IterationEditPage() {
         difficulty: difficulty.trim(),
         totalTime: totalTimeNum,
         bakeDate: bakeDateTs,
-        rating: ratingNum,
+        rating,
         notes: notes.trim() || undefined,
         sourceUrl: sourceUrl.trim() || undefined,
       });
@@ -183,14 +208,38 @@ export default function IterationEditPage() {
     );
   }
 
+  const bakedGoodName = bakedGood && "name" in bakedGood ? bakedGood.name : "Baked Good";
+
   return (
-    <div className="p-6 md:p-8 max-w-xl">
-      <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link href={`/baked-goods/${id}/iterations/${iterationId}`}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to iteration
-        </Link>
-      </Button>
+    <div className="p-6 md:p-8 max-w-xl space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/my-bakery">My Bakery</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/baked-goods/${id}`}>{bakedGoodName}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/baked-goods/${id}/iterations/${iterationId}`}>
+                {formatDate(iteration.bakeDate)}
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Edit</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <Card>
         <CardHeader>
           <CardTitle>Edit iteration</CardTitle>
@@ -240,6 +289,20 @@ export default function IterationEditPage() {
                 required
                 disabled={isSubmitting}
               />
+              <div className="flex flex-wrap gap-2">
+                {TIME_PRESETS.map((min) => (
+                  <Button
+                    key={min}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isSubmitting}
+                    onClick={() => setTotalTime(String(min))}
+                  >
+                    {formatMinutes(min)}
+                  </Button>
+                ))}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="bakeDate">Bake date</Label>
@@ -264,15 +327,10 @@ export default function IterationEditPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rating">Rating (optional, 1–5)</Label>
-              <Input
-                id="rating"
-                type="number"
-                min={1}
-                max={5}
+              <Label>Rating (optional)</Label>
+              <StarRating
                 value={rating}
-                onChange={(e) => setRating(e.target.value)}
-                placeholder="1–5"
+                onChange={setRating}
                 disabled={isSubmitting}
               />
             </div>

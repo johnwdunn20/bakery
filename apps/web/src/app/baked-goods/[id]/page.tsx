@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
@@ -26,7 +26,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowDown, ArrowUp, CalendarClock, Copy, Image, List, Plus, Star } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowDown, ArrowUp, CalendarClock, Copy, Image, List, Pencil, Plus, Star, Trash2 } from "lucide-react";
 
 type ViewMode = "list" | "timeline";
 type SortOption = "date-desc" | "date-asc" | "rating-desc" | "rating-asc";
@@ -85,9 +104,17 @@ export default function BakedGoodDetailPage() {
   const router = useRouter();
   const id = params.id as string;
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
+  const updateBakedGood = useMutation(api.bakedGoods.updateBakedGood);
+  const deleteBakedGood = useMutation(api.bakedGoods.deleteBakedGood);
   const [duplicatingId, setDuplicatingId] = useState<Id<"recipeIterations"> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const bakedGood = useQuery(
     api.bakedGoods.getBakedGoodWithIterations,
     id ? { id: id as Id<"bakedGoods"> } : "skip"
@@ -96,6 +123,47 @@ export default function BakedGoodDetailPage() {
     () => (bakedGood?.iterations ? sortIterations(bakedGood.iterations, sortOption) : []),
     [bakedGood?.iterations, sortOption]
   );
+
+  // Initialize edit form when bakedGood loads or sheet opens
+  useEffect(() => {
+    if (bakedGood && isEditSheetOpen) {
+      setEditName(bakedGood.name);
+      setEditDescription(bakedGood.description ?? "");
+      setUpdateError(null);
+    }
+  }, [bakedGood, isEditSheetOpen]);
+
+  async function handleUpdateBakedGood() {
+    if (!editName.trim()) {
+      setUpdateError("Name is required.");
+      return;
+    }
+    setUpdateError(null);
+    setIsUpdating(true);
+    try {
+      await updateBakedGood({
+        id: id as Id<"bakedGoods">,
+        name: editName.trim(),
+        description: editDescription.trim() || undefined,
+      });
+      setIsEditSheetOpen(false);
+    } catch (err) {
+      setUpdateError(err instanceof Error ? err.message : "Failed to update.");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  async function handleDeleteBakedGood() {
+    setIsDeleting(true);
+    try {
+      await deleteBakedGood({ id: id as Id<"bakedGoods"> });
+      router.push("/my-bakery");
+    } catch (err) {
+      setUpdateError(err instanceof Error ? err.message : "Failed to delete.");
+      setIsDeleting(false);
+    }
+  }
 
   if (bakedGood === undefined) {
     return (
@@ -208,11 +276,106 @@ export default function BakedGoodDetailPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-2xl space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{bakedGood.name}</h1>
-        {bakedGood.description && (
-          <p className="text-muted-foreground mt-1">{bakedGood.description}</p>
-        )}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/my-bakery">My Bakery</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{bakedGood.name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{bakedGood.name}</h1>
+          {bakedGood.description && (
+            <p className="text-muted-foreground mt-1">{bakedGood.description}</p>
+          )}
+        </div>
+        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Edit baked good">
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Edit Baked Good</SheetTitle>
+              <SheetDescription>
+                Update the name and description of this baked good.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Sourdough Bread"
+                  disabled={isUpdating || isDeleting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description (optional)</Label>
+                <textarea
+                  id="edit-description"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="A brief description..."
+                  disabled={isUpdating || isDeleting}
+                />
+              </div>
+              {updateError && (
+                <p className="text-sm text-destructive">{updateError}</p>
+              )}
+            </div>
+            <SheetFooter className="flex-col gap-2 sm:flex-col">
+              <Button
+                onClick={handleUpdateBakedGood}
+                disabled={isUpdating || isDeleting}
+                className="w-full"
+              >
+                {isUpdating ? "Saving..." : "Save changes"}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    disabled={isUpdating || isDeleting}
+                    className="w-full"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {isDeleting ? "Deleting..." : "Delete Baked Good"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this baked good?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete &quot;{bakedGood.name}&quot; and all {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={handleDeleteBakedGood}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {iterationCount > 0 && (

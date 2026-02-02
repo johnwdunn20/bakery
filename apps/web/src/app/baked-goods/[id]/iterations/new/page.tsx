@@ -18,8 +18,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { StarRating } from "@/components/ui/star-rating";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
+
+function formatMinutes(min: number) {
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 
 export default function NewIterationPage() {
   const params = useParams();
@@ -38,7 +55,7 @@ export default function NewIterationPage() {
   const [difficulty, setDifficulty] = useState("Medium");
   const [totalTime, setTotalTime] = useState("");
   const [bakeDate, setBakeDate] = useState(new Date().toISOString().slice(0, 10));
-  const [rating, setRating] = useState("");
+  const [rating, setRating] = useState<number | undefined>(undefined);
   const [notes, setNotes] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,11 +82,6 @@ export default function NewIterationPage() {
       setError("Invalid bake date.");
       return;
     }
-    const ratingNum = rating ? parseInt(rating, 10) : undefined;
-    if (rating !== "" && (Number.isNaN(ratingNum!) || ratingNum! < 1 || ratingNum! > 5)) {
-      setError("Rating must be between 1 and 5.");
-      return;
-    }
     setIsSubmitting(true);
     const files = photoInputRef.current?.files;
     try {
@@ -79,7 +91,7 @@ export default function NewIterationPage() {
         difficulty: difficulty.trim(),
         totalTime: totalTimeNum,
         bakeDate: bakeDateTs,
-        rating: ratingNum,
+        rating,
         notes: notes.trim() || undefined,
         sourceUrl: sourceUrl.trim() || undefined,
       });
@@ -125,7 +137,27 @@ export default function NewIterationPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-xl">
+    <div className="p-6 md:p-8 max-w-xl space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/my-bakery">My Bakery</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={`/baked-goods/${bakedGoodId}`}>{bakedGood.name}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>New Iteration</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <Card>
         <CardHeader>
           <CardTitle>Add iteration</CardTitle>
@@ -175,6 +207,20 @@ export default function NewIterationPage() {
                 required
                 disabled={isSubmitting}
               />
+              <div className="flex flex-wrap gap-2">
+                {TIME_PRESETS.map((min) => (
+                  <Button
+                    key={min}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isSubmitting}
+                    onClick={() => setTotalTime(String(min))}
+                  >
+                    {formatMinutes(min)}
+                  </Button>
+                ))}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="bakeDate">Bake date</Label>
@@ -199,15 +245,10 @@ export default function NewIterationPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rating">Rating (optional, 1–5)</Label>
-              <Input
-                id="rating"
-                type="number"
-                min={1}
-                max={5}
+              <Label>Rating (optional)</Label>
+              <StarRating
                 value={rating}
-                onChange={(e) => setRating(e.target.value)}
-                placeholder="1–5"
+                onChange={setRating}
                 disabled={isSubmitting}
               />
             </div>
