@@ -13,6 +13,14 @@
     "convex:deploy": "pnpm --filter=@bakery/backend exec convex deploy"
   },
   "packageManager": "pnpm@10.13.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
+  },
   "devDependencies": {
     "prettier": "^3.7.4",
     "turbo": "^2.7.4",
