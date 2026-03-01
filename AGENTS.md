@@ -35,8 +35,16 @@ Standard commands are in root `package.json` scripts. Non-obvious notes:
 - `pnpm lint` runs only in `apps/web` (other packages have no lint script). There are pre-existing lint errors in the codebase.
 - `pnpm typecheck` runs across all 3 packages and passes clean.
 
+### Starting the dev server
+
+1. Populate `.env.local` files from environment variable secrets (see table above). The secrets are injected as env vars — write them into the `.env.local` files at runtime.
+2. Run `pnpm --filter web dev` (or `pnpm dev` for the full Turborepo `dev` task).
+3. The Convex backend is cloud-hosted — **you do not need to run `pnpm convex:dev` locally** for the web app to function. The Next.js app connects to the Convex cloud deployment via `NEXT_PUBLIC_CONVEX_URL`.
+4. Only run `pnpm convex:dev` if you need to push schema/function changes to the Convex deployment.
+
 ### Gotchas
 
 - The `pnpm.onlyBuiltDependencies` field in root `package.json` allowlists build scripts for `@clerk/shared`, `esbuild`, `sharp`, and `unrs-resolver`. Without this, `pnpm install` will warn about ignored build scripts and native binaries won't be compiled.
 - Clerk's middleware (`src/proxy.ts`) intercepts all non-static routes. The dev server will return 500 on all page requests if `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is missing or invalid.
 - `.env.local` files (not committed) must be created from `.env.example` in both `apps/web/` and `packages/backend/`.
+- Clerk in development mode auto-verifies sign-ups (no email verification step needed).
