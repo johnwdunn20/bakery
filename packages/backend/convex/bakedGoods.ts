@@ -1,6 +1,22 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 
+const difficultyValidator = v.union(v.literal("Easy"), v.literal("Medium"), v.literal("Hard"));
+
+function validateName(name: string) {
+  if (!name.trim()) throw new Error("Name cannot be empty");
+}
+
+function validateRating(rating: number | undefined) {
+  if (rating !== undefined && (rating < 1 || rating > 5)) {
+    throw new Error("Rating must be between 1 and 5");
+  }
+}
+
+function validateTotalTime(totalTime: number) {
+  if (totalTime < 0) throw new Error("Total time cannot be negative");
+}
+
 export const createBakedGood = mutation({
   args: {
     name: v.string(),
@@ -9,6 +25,8 @@ export const createBakedGood = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
+
+    validateName(args.name);
 
     const user = await ctx.db
       .query("users")
@@ -55,6 +73,8 @@ export const updateBakedGood = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
+    if (args.name !== undefined) validateName(args.name);
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -93,6 +113,23 @@ export const deleteBakedGood = mutation({
       throw new Error("Baked good not found or not owned by you");
     }
 
+    const iterations = await ctx.db
+      .query("recipeIterations")
+      .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.id))
+      .collect();
+
+    for (const iteration of iterations) {
+      const photos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", iteration._id))
+        .collect();
+      for (const photo of photos) {
+        await ctx.storage.delete(photo.storageId);
+        await ctx.db.delete(photo._id);
+      }
+      await ctx.db.delete(iteration._id);
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   },
@@ -117,27 +154,16 @@ export const listMyBakedGoods = query({
 
     return await Promise.all(
       bakedGoods.map(async (bg) => {
-        // Get the most recent iteration
         const iterations = await ctx.db
           .query("recipeIterations")
           .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", bg._id))
           .collect();
 
-        // Sort by bake date descending and get the most recent
         const mostRecentIteration = iterations.sort((a, b) => b.bakeDate - a.bakeDate)[0];
 
         let firstPhotoUrl: string | null = null;
-        if (mostRecentIteration) {
-          // Get the first photo from the most recent iteration
-          const photos = await ctx.db
-            .query("iterationPhotos")
-            .withIndex("by_iteration", (q) => q.eq("iterationId", mostRecentIteration._id))
-            .collect();
-          photos.sort((a, b) => a.order - b.order);
-          const firstPhoto = photos[0];
-          if (firstPhoto) {
-            firstPhotoUrl = await ctx.storage.getUrl(firstPhoto.storageId);
-          }
+        if (mostRecentIteration?.firstPhotoStorageId) {
+          firstPhotoUrl = await ctx.storage.getUrl(mostRecentIteration.firstPhotoStorageId);
         }
 
         return {
@@ -153,8 +179,17 @@ export const listMyBakedGoods = query({
 export const getBakedGoodWithIterations = query({
   args: { id: v.id("bakedGoods") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) return null;
+
     const bakedGood = await ctx.db.get(args.id);
-    if (!bakedGood) return null;
+    if (!bakedGood || bakedGood.authorId !== user._id) return null;
 
     const rawIterations = await ctx.db
       .query("recipeIterations")
@@ -169,9 +204,9 @@ export const getBakedGoodWithIterations = query({
           .query("iterationPhotos")
           .withIndex("by_iteration", (q) => q.eq("iterationId", it._id))
           .collect();
-        photos.sort((a, b) => a.order - b.order);
-        const firstPhoto = photos[0] ?? null;
-        const firstPhotoUrl = firstPhoto ? await ctx.storage.getUrl(firstPhoto.storageId) : null;
+        const firstPhotoUrl = it.firstPhotoStorageId
+          ? await ctx.storage.getUrl(it.firstPhotoStorageId)
+          : null;
         return {
           ...it,
           photoCount: photos.length,
@@ -196,6 +231,25 @@ export const getBakedGoodWithIterations = query({
       bestRating,
       lastBakedDate,
     };
+  },
+});
+
+export const getBakedGood = query({
+  args: { id: v.id("bakedGoods") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) return null;
+
+    const bakedGood = await ctx.db.get(args.id);
+    if (!bakedGood || bakedGood.authorId !== user._id) return null;
+
+    return bakedGood;
   },
 });
 
@@ -288,12 +342,22 @@ export const addIterationPhoto = mutation({
     const order = args.order ?? maxOrder + 1;
     const now = Date.now();
 
-    return await ctx.db.insert("iterationPhotos", {
+    const photoId = await ctx.db.insert("iterationPhotos", {
       iterationId: args.iterationId,
       storageId: args.storageId,
       order,
       createdAt: now,
     });
+
+    if (existingPhotos.length === 0 || order === 0) {
+      const firstStorageId =
+        order === 0
+          ? args.storageId
+          : (existingPhotos.sort((a, b) => a.order - b.order)[0]?.storageId ?? args.storageId);
+      await ctx.db.patch(args.iterationId, { firstPhotoStorageId: firstStorageId });
+    }
+
+    return photoId;
   },
 });
 
@@ -322,6 +386,16 @@ export const deleteIterationPhoto = mutation({
 
     await ctx.storage.delete(photo.storageId);
     await ctx.db.delete(args.id);
+
+    const remainingPhotos = await ctx.db
+      .query("iterationPhotos")
+      .withIndex("by_iteration", (q) => q.eq("iterationId", photo.iterationId))
+      .collect();
+    remainingPhotos.sort((a, b) => a.order - b.order);
+    await ctx.db.patch(photo.iterationId, {
+      firstPhotoStorageId: remainingPhotos[0]?.storageId,
+    });
+
     return args.id;
   },
 });
@@ -330,7 +404,7 @@ export const createIteration = mutation({
   args: {
     bakedGoodId: v.id("bakedGoods"),
     recipeContent: v.string(),
-    difficulty: v.string(),
+    difficulty: difficultyValidator,
     totalTime: v.number(),
     bakeDate: v.number(),
     rating: v.optional(v.number()),
@@ -340,6 +414,9 @@ export const createIteration = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
+
+    validateTotalTime(args.totalTime);
+    validateRating(args.rating);
 
     const user = await ctx.db
       .query("users")
@@ -372,7 +449,7 @@ export const updateIteration = mutation({
   args: {
     id: v.id("recipeIterations"),
     recipeContent: v.optional(v.string()),
-    difficulty: v.optional(v.string()),
+    difficulty: v.optional(difficultyValidator),
     totalTime: v.optional(v.number()),
     bakeDate: v.optional(v.number()),
     rating: v.optional(v.number()),
@@ -382,6 +459,10 @@ export const updateIteration = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
+
+    if (args.totalTime !== undefined) validateTotalTime(args.totalTime);
+    validateRating(args.rating);
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -424,6 +505,16 @@ export const deleteIteration = mutation({
     if (!bakedGood || bakedGood.authorId !== user._id) {
       throw new Error("Iteration not found or not owned by you");
     }
+
+    const photos = await ctx.db
+      .query("iterationPhotos")
+      .withIndex("by_iteration", (q) => q.eq("iterationId", args.id))
+      .collect();
+    for (const photo of photos) {
+      await ctx.storage.delete(photo.storageId);
+      await ctx.db.delete(photo._id);
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   },
@@ -465,8 +556,7 @@ export const duplicateIteration = mutation({
 export const listCommunityBakedGoods = query({
   args: {},
   handler: async (ctx) => {
-    const list = await ctx.db.query("bakedGoods").collect();
-    const bakedGoods = list.sort((a, b) => b.createdAt - a.createdAt).slice(0, 12);
+    const bakedGoods = await ctx.db.query("bakedGoods").order("desc").take(12);
 
     return await Promise.all(
       bakedGoods.map(async (bg) => {

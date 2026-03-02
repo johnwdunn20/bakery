@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { z } from "zod";
+import { bakedGoodSchema } from "@bakery/shared/validation";
 import { useMutation } from "convex/react";
 import { api } from "@bakery/backend";
 import { useRouter } from "next/navigation";
@@ -17,31 +21,32 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+type BakedGoodFormData = z.infer<typeof bakedGoodSchema>;
+
 export default function NewBakedGoodPage() {
   const router = useRouter();
   const createBakedGood = useMutation(api.bakedGoods.createBakedGood);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!name.trim()) {
-      setError("Name is required.");
-      return;
-    }
-    setIsSubmitting(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<BakedGoodFormData>({
+    resolver: zodResolver(bakedGoodSchema),
+    defaultValues: { name: "", description: "" },
+  });
+
+  async function onSubmit(data: BakedGoodFormData) {
+    setServerError(null);
     try {
       const id = await createBakedGood({
-        name: name.trim(),
-        description: description.trim() || undefined,
+        name: data.name.trim(),
+        description: data.description?.trim() || undefined,
       });
       router.push(`/baked-goods/${id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create baked good.");
-      setIsSubmitting(false);
+      setServerError(err instanceof Error ? err.message : "Failed to create baked good.");
     }
   }
 
@@ -54,30 +59,31 @@ export default function NewBakedGoodPage() {
             Add a new baked good to your journal. You can add recipe iterations later.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...register("name")}
                 placeholder="e.g. Classic Sourdough"
-                required
                 disabled={isSubmitting}
               />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description (optional)</Label>
               <Input
                 id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                {...register("description")}
                 placeholder="A short description"
                 disabled={isSubmitting}
               />
+              {errors.description && (
+                <p className="text-sm text-destructive">{errors.description.message}</p>
+              )}
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {serverError && <p className="text-sm text-destructive">{serverError}</p>}
           </CardContent>
           <CardFooter className="gap-2 pt-6">
             <Button type="submit" disabled={isSubmitting}>

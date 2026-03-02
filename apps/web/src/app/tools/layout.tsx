@@ -7,17 +7,18 @@ import { UserButton } from "@clerk/nextjs";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function ToolsLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isSignedIn } = useCurrentUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isSignedIn) {
-      redirect("/");
+      router.replace("/");
     }
-  }, [isLoading, isSignedIn]);
+  }, [isLoading, isSignedIn, router]);
 
   if (isLoading || !isSignedIn || !user) {
     return (

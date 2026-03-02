@@ -8,18 +8,18 @@ import { UserButton } from "@clerk/nextjs";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function MyBakeryPage() {
   const { user, isLoading, isSignedIn } = useCurrentUser();
+  const router = useRouter();
 
-  // Redirect to home if not signed in
   useEffect(() => {
     if (!isLoading && !isSignedIn) {
-      redirect("/");
+      router.replace("/");
     }
-  }, [isLoading, isSignedIn]);
+  }, [isLoading, isSignedIn, router]);
 
   // Show loading state
   if (isLoading || !isSignedIn || !user) {

@@ -144,7 +144,7 @@ export const getOrCreateSeedUser = internalMutation({
   },
 });
 
-export const getOrCreateSystemUser = mutation({
+export const getOrCreateSystemUser = internalMutation({
   args: {},
   handler: async (ctx) => {
     const systemUser = await ctx.db

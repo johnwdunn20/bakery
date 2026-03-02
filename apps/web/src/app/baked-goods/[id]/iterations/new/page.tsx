@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { z } from "zod";
+import { iterationSchema, DIFFICULTIES } from "@bakery/shared/validation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
@@ -39,7 +43,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { X, Check, Loader2, AlertCircle, CalendarIcon } from "lucide-react";
 
-const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
 
 function formatMinutes(min: number) {
@@ -57,27 +60,42 @@ interface SelectedFile {
   status: UploadStatus;
 }
 
+type IterationFormData = z.infer<typeof iterationSchema>;
+
 export default function NewIterationPage() {
   const params = useParams();
   const router = useRouter();
   const bakedGoodId = params.id as string;
   const bakedGood = useQuery(
-    api.bakedGoods.getBakedGoodWithIterations,
+    api.bakedGoods.getBakedGood,
     bakedGoodId ? { id: bakedGoodId as Id<"bakedGoods"> } : "skip"
   );
   const createIteration = useMutation(api.bakedGoods.createIteration);
   const generateUploadUrl = useMutation(api.bakedGoods.generateUploadUrl);
   const addIterationPhoto = useMutation(api.bakedGoods.addIterationPhoto);
 
-  const [recipeContent, setRecipeContent] = useState("");
-  const [difficulty, setDifficulty] = useState("Medium");
-  const [totalTime, setTotalTime] = useState("");
-  const [bakeDate, setBakeDate] = useState(new Date().toISOString().slice(0, 10));
-  const [rating, setRating] = useState<number | undefined>(undefined);
-  const [notes, setNotes] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<IterationFormData>({
+    resolver: zodResolver(iterationSchema),
+    defaultValues: {
+      recipeContent: "",
+      difficulty: "Medium",
+      totalTime: undefined as unknown as number,
+      bakeDate: new Date().toLocaleDateString("en-CA"),
+      rating: undefined,
+      notes: "",
+      sourceUrl: "",
+    },
+  });
+
+  const bakeDate = watch("bakeDate");
+  const [serverError, setServerError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
 
   function handleFilesSelected(files: FileList) {
@@ -104,42 +122,22 @@ export default function NewIterationPage() {
     });
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!recipeContent.trim()) {
-      setError("Recipe content is required.");
-      return;
-    }
-    const totalTimeNum = parseInt(totalTime, 10);
-    if (Number.isNaN(totalTimeNum) || totalTimeNum < 0) {
-      setError("Total time must be a non-negative number (minutes).");
-      return;
-    }
-    if (!bakeDate) {
-      setError("Bake date is required.");
-      return;
-    }
-    const bakeDateTs = new Date(bakeDate).getTime();
-    if (Number.isNaN(bakeDateTs)) {
-      setError("Invalid bake date.");
-      return;
-    }
-    setIsSubmitting(true);
+  async function onSubmit(data: IterationFormData) {
+    setServerError(null);
+    const bakeDateTs = new Date(data.bakeDate + "T12:00:00").getTime();
     try {
       const newId = await createIteration({
         bakedGoodId: bakedGoodId as Id<"bakedGoods">,
-        recipeContent: recipeContent.trim(),
-        difficulty: difficulty.trim(),
-        totalTime: totalTimeNum,
+        recipeContent: data.recipeContent.trim(),
+        difficulty: data.difficulty,
+        totalTime: data.totalTime,
         bakeDate: bakeDateTs,
-        rating,
-        notes: notes.trim() || undefined,
-        sourceUrl: sourceUrl.trim() || undefined,
+        rating: data.rating,
+        notes: data.notes?.trim() || undefined,
+        sourceUrl: data.sourceUrl?.trim() || undefined,
       });
       if (selectedFiles.length > 0) {
         for (let i = 0; i < selectedFiles.length; i++) {
-          // Mark as uploading
           setSelectedFiles((prev) =>
             prev.map((f, idx) => (idx === i ? { ...f, status: "uploading" as UploadStatus } : f))
           );
@@ -154,12 +152,10 @@ export default function NewIterationPage() {
               storageId: storageId as Id<"_storage">,
               order: i,
             });
-            // Mark as done
             setSelectedFiles((prev) =>
               prev.map((f, idx) => (idx === i ? { ...f, status: "done" as UploadStatus } : f))
             );
           } catch {
-            // Mark as error but continue
             setSelectedFiles((prev) =>
               prev.map((f, idx) => (idx === i ? { ...f, status: "error" as UploadStatus } : f))
             );
@@ -168,8 +164,7 @@ export default function NewIterationPage() {
       }
       router.push(`/baked-goods/${bakedGoodId}/iterations/${newId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create iteration.");
-      setIsSubmitting(false);
+      setServerError(err instanceof Error ? err.message : "Failed to create iteration.");
     }
   }
 
@@ -223,50 +218,66 @@ export default function NewIterationPage() {
             time, and bake date are required.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="recipeContent">Recipe content</Label>
               <textarea
                 id="recipeContent"
                 className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={recipeContent}
-                onChange={(e) => setRecipeContent(e.target.value)}
+                {...register("recipeContent")}
                 placeholder="Ingredients, steps, etc."
-                required
                 disabled={isSubmitting}
               />
-              <p className="text-xs text-muted-foreground">
-                Supports Markdown: **bold**, *italic*, - lists, ## headings
-              </p>
+              {errors.recipeContent ? (
+                <p className="text-sm text-destructive">{errors.recipeContent.message}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Supports Markdown: **bold**, *italic*, - lists, ## headings
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Difficulty</Label>
-              <Select value={difficulty} onValueChange={setDifficulty} disabled={isSubmitting}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DIFFICULTIES.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="difficulty"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIFFICULTIES.map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.difficulty && (
+                <p className="text-sm text-destructive">{errors.difficulty.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="totalTime">Total time (minutes)</Label>
               <Input
                 id="totalTime"
                 type="number"
-                min={0}
-                value={totalTime}
-                onChange={(e) => setTotalTime(e.target.value)}
+                min={1}
+                {...register("totalTime", { valueAsNumber: true })}
                 placeholder="e.g. 45"
-                required
                 disabled={isSubmitting}
               />
+              {errors.totalTime && (
+                <p className="text-sm text-destructive">{errors.totalTime.message}</p>
+              )}
               <div className="flex flex-wrap gap-2">
                 {TIME_PRESETS.map((min) => (
                   <Button
@@ -275,7 +286,7 @@ export default function NewIterationPage() {
                     variant="outline"
                     size="sm"
                     disabled={isSubmitting}
-                    onClick={() => setTotalTime(String(min))}
+                    onClick={() => setValue("totalTime", min)}
                   >
                     {formatMinutes(min)}
                   </Button>
@@ -294,7 +305,7 @@ export default function NewIterationPage() {
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {bakeDate
-                        ? new Date(bakeDate).toLocaleDateString(undefined, {
+                        ? new Date(bakeDate + "T12:00:00").toLocaleDateString(undefined, {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
@@ -305,8 +316,10 @@ export default function NewIterationPage() {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={bakeDate ? new Date(bakeDate) : undefined}
-                      onSelect={(date) => setBakeDate(date ? date.toISOString().slice(0, 10) : "")}
+                      selected={bakeDate ? new Date(bakeDate + "T12:00:00") : undefined}
+                      onSelect={(date) =>
+                        setValue("bakeDate", date ? date.toLocaleDateString("en-CA") : "")
+                      }
                       initialFocus
                     />
                   </PopoverContent>
@@ -316,23 +329,35 @@ export default function NewIterationPage() {
                   variant="outline"
                   size="sm"
                   disabled={isSubmitting}
-                  onClick={() => setBakeDate(new Date().toISOString().slice(0, 10))}
+                  onClick={() => setValue("bakeDate", new Date().toLocaleDateString("en-CA"))}
                 >
                   Today
                 </Button>
               </div>
+              {errors.bakeDate && (
+                <p className="text-sm text-destructive">{errors.bakeDate.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Rating (optional)</Label>
-              <StarRating value={rating} onChange={setRating} disabled={isSubmitting} />
+              <Controller
+                control={control}
+                name="rating"
+                render={({ field }) => (
+                  <StarRating
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optional)</Label>
               <textarea
                 id="notes"
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                {...register("notes")}
                 placeholder="How did it turn out?"
                 disabled={isSubmitting}
               />
@@ -342,11 +367,13 @@ export default function NewIterationPage() {
               <Input
                 id="sourceUrl"
                 type="url"
-                value={sourceUrl}
-                onChange={(e) => setSourceUrl(e.target.value)}
+                {...register("sourceUrl")}
                 placeholder="https://..."
                 disabled={isSubmitting}
               />
+              {errors.sourceUrl && (
+                <p className="text-sm text-destructive">{errors.sourceUrl.message}</p>
+              )}
             </div>
             <div className="space-y-3">
               <Label>Photos (optional)</Label>
@@ -354,7 +381,7 @@ export default function NewIterationPage() {
                 <PhotoGrid>
                   {selectedFiles.map((sf, index) => (
                     <div
-                      key={index}
+                      key={sf.file.name + sf.file.size}
                       className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
                     >
                       <img
@@ -362,7 +389,6 @@ export default function NewIterationPage() {
                         alt={`Selected photo ${index + 1}`}
                         className={`w-full h-full object-cover ${sf.status === "uploading" ? "opacity-50" : ""}`}
                       />
-                      {/* Upload status indicator */}
                       {sf.status === "uploading" && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                           <Loader2 className="h-8 w-8 text-white animate-spin" />
@@ -378,7 +404,6 @@ export default function NewIterationPage() {
                           <AlertCircle className="h-4 w-4 text-white" />
                         </div>
                       )}
-                      {/* Remove button - only show when not submitting */}
                       {!isSubmitting && (
                         <Button
                           type="button"
@@ -397,7 +422,7 @@ export default function NewIterationPage() {
               )}
               <PhotoDropzone onFilesSelected={handleFilesSelected} disabled={isSubmitting} />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {serverError && <p className="text-sm text-destructive">{serverError}</p>}
           </CardContent>
           <CardFooter className="gap-2">
             <Button type="submit" disabled={isSubmitting}>

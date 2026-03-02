@@ -32,9 +32,12 @@ export default defineSchema({
     rating: v.optional(v.number()),
     notes: v.optional(v.string()),
     sourceUrl: v.optional(v.string()),
+    firstPhotoStorageId: v.optional(v.id("_storage")),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_baked_good", ["bakedGoodId"]),
+  })
+    .index("by_baked_good", ["bakedGoodId"])
+    .index("by_baked_good_bake_date", ["bakedGoodId", "bakeDate"]),
 
   iterationPhotos: defineTable({
     iterationId: v.id("recipeIterations"),

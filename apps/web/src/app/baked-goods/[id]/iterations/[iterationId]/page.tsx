@@ -6,6 +6,7 @@ import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -91,7 +92,7 @@ export default function IterationViewPage() {
     iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
   );
   const bakedGood = useQuery(
-    api.bakedGoods.getBakedGoodWithIterations,
+    api.bakedGoods.getBakedGood,
     id ? { id: id as Id<"bakedGoods"> } : "skip"
   );
 
@@ -277,10 +278,12 @@ export default function IterationViewPage() {
                   }}
                 >
                   {photo.url ? (
-                    <img
+                    <Image
                       src={photo.url}
                       alt={`Photo ${index + 1} of ${bakedGoodName}`}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, 33vw"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
