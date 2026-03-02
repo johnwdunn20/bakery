@@ -93,6 +93,23 @@ export const deleteBakedGood = mutation({
       throw new Error("Baked good not found or not owned by you");
     }
 
+    const iterations = await ctx.db
+      .query("recipeIterations")
+      .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.id))
+      .collect();
+
+    for (const iteration of iterations) {
+      const photos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", iteration._id))
+        .collect();
+      for (const photo of photos) {
+        await ctx.storage.delete(photo.storageId);
+        await ctx.db.delete(photo._id);
+      }
+      await ctx.db.delete(iteration._id);
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   },
@@ -153,8 +170,17 @@ export const listMyBakedGoods = query({
 export const getBakedGoodWithIterations = query({
   args: { id: v.id("bakedGoods") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) return null;
+
     const bakedGood = await ctx.db.get(args.id);
-    if (!bakedGood) return null;
+    if (!bakedGood || bakedGood.authorId !== user._id) return null;
 
     const rawIterations = await ctx.db
       .query("recipeIterations")
@@ -424,6 +450,16 @@ export const deleteIteration = mutation({
     if (!bakedGood || bakedGood.authorId !== user._id) {
       throw new Error("Iteration not found or not owned by you");
     }
+
+    const photos = await ctx.db
+      .query("iterationPhotos")
+      .withIndex("by_iteration", (q) => q.eq("iterationId", args.id))
+      .collect();
+    for (const photo of photos) {
+      await ctx.storage.delete(photo.storageId);
+      await ctx.db.delete(photo._id);
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   },

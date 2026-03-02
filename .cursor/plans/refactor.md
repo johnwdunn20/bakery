@@ -6,19 +6,19 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 
 ## Critical (Security / Data Loss)
 
-- [ ] **`getBakedGoodWithIterations` has no authorization check**
+- [x] **`getBakedGoodWithIterations` has no authorization check**
       `packages/backend/convex/bakedGoods.ts`
       Returns any user's full recipe history to anyone with a valid document ID. Add an ownership check (compare `userId` to `identity.subject`) matching the pattern already used in `getIteration`.
 
-- [ ] **`deleteBakedGood` has no cascade delete**
+- [x] **`deleteBakedGood` has no cascade delete**
       `packages/backend/convex/bakedGoods.ts`
       Deletes only the parent document. Child `recipeIterations`, `iterationPhotos` records, and Convex storage blobs are permanently orphaned. Delete all children before deleting the parent.
 
-- [ ] **`deleteIteration` has no cascade delete**
+- [x] **`deleteIteration` has no cascade delete**
       `packages/backend/convex/bakedGoods.ts`
       Iteration photos are never removed from `iterationPhotos` or Convex storage. Call `ctx.storage.delete` and `ctx.db.delete` on all associated photos first.
 
-- [ ] **`getOrCreateSystemUser` is a public mutation**
+- [x] **`getOrCreateSystemUser` is a public mutation**
       `packages/backend/convex/users.ts`
       Any unauthenticated caller can invoke this to create records in the database. Change to `internalMutation`.
 
