@@ -42,12 +42,14 @@ export function BakersMathCalculator() {
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-lg border-primary/20 bg-background/50 backdrop-blur">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <CardTitle className="text-2xl font-bold">Live Baker's Math Demo</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl font-bold">
+              Live Baker&apos;s Math Demo
+            </CardTitle>
             <CardDescription>Adjust the flour and watch the recipe scale.</CardDescription>
           </div>
-          <div className="bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
+          <div className="bg-primary/10 px-4 py-2 rounded-full border border-primary/20 self-start sm:self-auto shrink-0">
             <span className="text-sm font-semibold text-primary">{hydration}% Hydration</span>
           </div>
         </div>
@@ -66,24 +68,32 @@ export function BakersMathCalculator() {
           />
         </div>
 
-        <div className="rounded-xl border border-border overflow-hidden">
+        <div className="rounded-xl border border-border overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
-                <th className="p-4 font-semibold">Ingredient</th>
-                <th className="p-4 font-semibold">Weight (g)</th>
-                <th className="p-4 font-semibold text-right">Ratio (%)</th>
+                <th className="px-3 py-2.5 sm:p-4 font-semibold text-sm sm:text-base">
+                  Ingredient
+                </th>
+                <th className="px-3 py-2.5 sm:p-4 font-semibold text-sm sm:text-base">
+                  Weight (g)
+                </th>
+                <th className="px-3 py-2.5 sm:p-4 font-semibold text-sm sm:text-base text-right">
+                  Ratio (%)
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {calculatedIngredients.map((ing) => (
                 <tr key={ing.name} className={ing.isFlour ? "bg-primary/5" : ""}>
-                  <td className="p-4 font-medium">{ing.name}</td>
-                  <td className="p-4">
+                  <td className="px-3 py-2.5 sm:p-4 font-medium text-sm sm:text-base">
+                    {ing.name}
+                  </td>
+                  <td className="px-3 py-2.5 sm:p-4 text-sm sm:text-base">
                     {ing.amount}
                     {ing.unit}
                   </td>
-                  <td className="p-4 text-right text-muted-foreground font-mono">
+                  <td className="px-3 py-2.5 sm:p-4 text-right text-muted-foreground font-mono text-sm sm:text-base">
                     {ing.percentage.toFixed(1)}%
                   </td>
                 </tr>

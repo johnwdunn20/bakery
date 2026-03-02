@@ -25,21 +25,25 @@ export function SplashPage() {
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
       {/* Header for splash page */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground text-sm">
               B
             </div>
-            Bakery
+            <span className="hidden sm:inline">Bakery</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <ThemeToggle />
             <SignedOut>
               <SignInButton>
-                <Button variant="ghost">Sign In</Button>
+                <Button variant="ghost" size="sm" className="sm:size-default">
+                  Sign In
+                </Button>
               </SignInButton>
               <SignUpButton>
-                <Button>Get Started</Button>
+                <Button size="sm" className="sm:size-default">
+                  Get Started
+                </Button>
               </SignUpButton>
             </SignedOut>
             <SignedIn>
@@ -50,7 +54,7 @@ export function SplashPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+      <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10 opacity-20 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary rounded-full blur-[120px]" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary rounded-full blur-[120px]" />
@@ -62,12 +66,12 @@ export function SplashPage() {
             <span>Master the Science of Baking</span>
           </div>
 
-          <h1 className="text-6xl md:text-7xl font-extrabold text-foreground tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-foreground tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150">
             Stop Guessing. <br />
             <span className="text-primary italic">Start Perfecting.</span>
           </h1>
 
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-300">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-300">
             The professional-grade toolkit for home bakers. Store your recipes, track variations
             with precision, and master the math behind every loaf.
           </p>
@@ -77,7 +81,7 @@ export function SplashPage() {
               <SignUpButton>
                 <Button
                   size="lg"
-                  className="h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/20"
+                  className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full shadow-lg shadow-primary/20"
                 >
                   Start Your Baking Journal <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -87,14 +91,18 @@ export function SplashPage() {
               <Button
                 asChild
                 size="lg"
-                className="h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/20"
+                className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full shadow-lg shadow-primary/20"
               >
                 <Link href="/my-bakery">
                   Go to My Bakery <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
             </SignedIn>
-            <Button variant="outline" size="lg" className="h-14 px-8 text-lg rounded-full">
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full"
+            >
               Explore Community Bakes
             </Button>
           </div>
@@ -102,33 +110,33 @@ export function SplashPage() {
       </section>
 
       {/* Feature Grid */}
-      <section className="py-20 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="p-6 sm:p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
             <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
               <Share2 className="h-6 w-6" />
             </div>
-            <h3 className="text-2xl font-bold mb-3">Infinite Variants</h3>
+            <h3 className="text-xl sm:text-2xl font-bold mb-3">Infinite Variants</h3>
             <p className="text-muted-foreground">
               Track small tweaks like hydration or salt % across versions. See exactly how your
               bakes evolve over time.
             </p>
           </div>
-          <div className="p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
+          <div className="p-6 sm:p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
             <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
               <Microscope className="h-6 w-6" />
             </div>
-            <h3 className="text-2xl font-bold mb-3">Baker&apos;s Percentages</h3>
+            <h3 className="text-xl sm:text-2xl font-bold mb-3">Baker&apos;s Percentages</h3>
             <p className="text-muted-foreground">
               No more manual math. Scale recipes instantly and understand ratios like a pro
               boulanger.
             </p>
           </div>
-          <div className="p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
+          <div className="p-6 sm:p-8 rounded-3xl border border-border bg-card/50 hover:border-primary/50 transition-all group">
             <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
               <Smartphone className="h-6 w-6" />
             </div>
-            <h3 className="text-2xl font-bold mb-3">Distraction-Free</h3>
+            <h3 className="text-xl sm:text-2xl font-bold mb-3">Distraction-Free</h3>
             <p className="text-muted-foreground">
               Bake Mode keeps your screen awake and focused on the steps. Clean, interactive, and
               mobile-friendly.
@@ -138,12 +146,12 @@ export function SplashPage() {
       </section>
 
       {/* Interactive Tools Section */}
-      <section className="py-24 px-6 bg-muted/30 border-y border-border">
+      <section className="py-12 sm:py-24 px-4 sm:px-6 bg-muted/30 border-y border-border">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           <div className="space-y-12">
             <div className="space-y-4">
-              <h2 className="text-4xl font-bold tracking-tight">Try the Tools.</h2>
-              <p className="text-xl text-muted-foreground max-w-md">
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Try the Tools.</h2>
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-md">
                 Get a taste of the precision Bakery provides. These tools are live and ready to help
                 your next bake.
               </p>
@@ -157,21 +165,21 @@ export function SplashPage() {
       </section>
 
       {/* Community Showcase */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
+      <section className="py-12 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl font-bold tracking-tight">Community Top Bakes</h2>
-          <p className="text-xl text-muted-foreground">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Community Top Bakes</h2>
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
             Recipes shared by bakers like you. Fork them to start your own experiments.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
           {communityBakedGoods?.map((bg) => (
             <Card
               key={bg._id}
               className="overflow-hidden border-border group hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5"
             >
-              <div className="h-64 relative bg-muted overflow-hidden">
+              <div className="h-48 sm:h-64 relative bg-muted overflow-hidden">
                 <div className="w-full h-full flex items-center justify-center text-4xl">🍞</div>
               </div>
               <CardHeader>
@@ -212,13 +220,13 @@ export function SplashPage() {
       </section>
 
       {/* Bake Mode Preview */}
-      <section className="py-24 px-6 bg-primary text-primary-foreground overflow-hidden">
+      <section className="py-12 sm:py-24 px-4 sm:px-6 bg-primary text-primary-foreground overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
-            <h2 className="text-5xl font-bold leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
               Focus on the Dough, Not the Screen.
             </h2>
-            <p className="text-xl text-primary-foreground/80 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-primary-foreground/80 leading-relaxed">
               Our signature **Bake Mode** is designed for the flour-covered hands. High-contrast,
               interactive steps, and a screen that never sleeps while you&apos;re working.
             </p>
@@ -252,8 +260,8 @@ export function SplashPage() {
               </Button>
             </SignedIn>
           </div>
-          <div className="relative">
-            <div className="bg-background rounded-[40px] border-8 border-primary-foreground/10 p-4 shadow-2xl overflow-hidden aspect-9/16 max-w-[320px] mx-auto transform lg:rotate-6">
+          <div className="relative hidden sm:block">
+            <div className="bg-background rounded-[40px] border-8 border-primary-foreground/10 p-4 shadow-2xl overflow-hidden aspect-9/16 max-w-[280px] sm:max-w-[320px] mx-auto transform lg:rotate-6">
               <div className="space-y-6 pt-8 px-4">
                 <div className="h-2 w-24 bg-muted rounded-full mx-auto mb-8" />
                 <div className="space-y-2">
@@ -281,8 +289,8 @@ export function SplashPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-border bg-card">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <footer className="py-8 sm:py-12 px-4 sm:px-6 border-t border-border bg-card">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-8">
           <div className="flex items-center gap-2 font-bold text-2xl">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground text-sm">
               B

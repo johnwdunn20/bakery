@@ -40,7 +40,7 @@ export function Dashboard() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
         <Button asChild size="lg" className="rounded-full">
           <Link href="/baked-goods/new">
             <Plus className="mr-2 h-5 w-5" />
@@ -54,7 +54,7 @@ export function Dashboard() {
               placeholder="Search baked goods..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 w-64"
+              className="pl-9 w-full sm:w-64"
             />
           </div>
         )}
@@ -146,7 +146,7 @@ export function Dashboard() {
             ))}
 
             <Link href="/baked-goods/new">
-              <Card className="overflow-hidden border-dashed hover:border-primary/50 transition-all cursor-pointer h-full min-h-[320px] flex items-center justify-center">
+              <Card className="overflow-hidden border-dashed hover:border-primary/50 transition-all cursor-pointer h-full min-h-[200px] sm:min-h-[320px] flex items-center justify-center">
                 <div className="text-center p-6">
                   <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <Plus className="h-6 w-6 text-primary" />

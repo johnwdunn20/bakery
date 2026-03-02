@@ -24,15 +24,14 @@ export function PhotoLightbox({
   onOpenChange,
 }: PhotoLightboxProps) {
   const [currentIndex, setCurrentIndex] = React.useState(initialIndex);
+  const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
 
-  // Reset to initial index when opening
   React.useEffect(() => {
     if (open) {
       setCurrentIndex(initialIndex);
     }
   }, [open, initialIndex]);
 
-  // Handle keyboard navigation
   React.useEffect(() => {
     if (!open) return;
 
@@ -54,7 +53,6 @@ export function PhotoLightbox({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, photos.length, onOpenChange]);
 
-  // Prevent body scroll when open
   React.useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -80,10 +78,33 @@ export function PhotoLightbox({
     setCurrentIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
   }
 
+  function handleTouchStart(e: React.TouchEvent) {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!touchStartRef.current || photos.length <= 1) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const minSwipeDistance = 50;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX < 0) {
+        goToNext();
+      } else {
+        goToPrev();
+      }
+    }
+    touchStartRef.current = null;
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       onClick={() => onOpenChange(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       role="dialog"
       aria-modal="true"
       aria-label="Photo viewer"
@@ -109,19 +130,18 @@ export function PhotoLightbox({
         </div>
       )}
 
-      {/* Previous button */}
       {hasPrev && (
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 h-12 w-12"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 h-10 w-10 sm:h-12 sm:w-12 hidden sm:flex"
           onClick={(e) => {
             e.stopPropagation();
             goToPrev();
           }}
           aria-label="Previous photo"
         >
-          <ChevronLeft className="h-8 w-8" />
+          <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
         </Button>
       )}
 
@@ -137,25 +157,23 @@ export function PhotoLightbox({
         />
       </div>
 
-      {/* Next button */}
       {hasNext && (
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 h-12 w-12"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 h-10 w-10 sm:h-12 sm:w-12 hidden sm:flex"
           onClick={(e) => {
             e.stopPropagation();
             goToNext();
           }}
           aria-label="Next photo"
         >
-          <ChevronRight className="h-8 w-8" />
+          <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
         </Button>
       )}
 
-      {/* Thumbnail strip */}
       {photos.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 p-2 bg-black/50 rounded-lg">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 p-2 bg-black/50 rounded-lg max-w-[90vw] overflow-x-auto">
           {photos.map((photo, index) => (
             <button
               key={index}
@@ -164,7 +182,7 @@ export function PhotoLightbox({
                 setCurrentIndex(index);
               }}
               className={cn(
-                "w-12 h-12 rounded overflow-hidden transition-all",
+                "w-10 h-10 sm:w-12 sm:h-12 rounded overflow-hidden transition-all shrink-0",
                 index === currentIndex
                   ? "ring-2 ring-white ring-offset-2 ring-offset-black"
                   : "opacity-60 hover:opacity-100"
