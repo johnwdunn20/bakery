@@ -116,8 +116,36 @@ export default function BakedGoodDetailPage() {
   const router = useRouter();
   const id = params.id as string;
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
-  const updateBakedGood = useMutation(api.bakedGoods.updateBakedGood);
-  const deleteBakedGood = useMutation(api.bakedGoods.deleteBakedGood);
+  const updateBakedGood = useMutation(api.bakedGoods.updateBakedGood).withOptimisticUpdate(
+    (localStore, args) => {
+      const current = localStore.getQuery(api.bakedGoods.getBakedGoodWithIterations, {
+        id: args.id,
+      });
+      if (current) {
+        localStore.setQuery(
+          api.bakedGoods.getBakedGoodWithIterations,
+          { id: args.id },
+          {
+            ...current,
+            ...(args.name !== undefined && { name: args.name }),
+            ...(args.description !== undefined && { description: args.description }),
+          }
+        );
+      }
+    }
+  );
+  const deleteBakedGood = useMutation(api.bakedGoods.deleteBakedGood).withOptimisticUpdate(
+    (localStore, args) => {
+      const current = localStore.getQuery(api.bakedGoods.listMyBakedGoods, {});
+      if (current) {
+        localStore.setQuery(
+          api.bakedGoods.listMyBakedGoods,
+          {},
+          current.filter((bg) => bg._id !== args.id)
+        );
+      }
+    }
+  );
   const [duplicatingId, setDuplicatingId] = useState<Id<"recipeIterations"> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");

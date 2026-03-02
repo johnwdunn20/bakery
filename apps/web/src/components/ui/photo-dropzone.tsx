@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import NextImage from "next/image";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -125,7 +126,17 @@ export function PhotoPreview({
     <div
       className={cn("relative aspect-square rounded-lg overflow-hidden bg-muted group", className)}
     >
-      <img src={src} alt={alt} className="w-full h-full object-cover" />
+      {src.startsWith("blob:") ? (
+        <img src={src} alt={alt} className="w-full h-full object-cover" />
+      ) : (
+        <NextImage
+          src={src}
+          alt={alt}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 50vw, 33vw"
+        />
+      )}
       {onRemove && (
         <Button
           type="button"

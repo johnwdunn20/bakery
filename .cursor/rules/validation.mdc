@@ -1,0 +1,12 @@
+---
+description: Check Terminal output after changes
+globs:
+alwaysApply: true
+---
+
+After completing file edits, check the terminal running convex and the web app
+
+```bash
+pnpm convex:dev
+pnpm dev
+```

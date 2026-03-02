@@ -4,25 +4,27 @@ import { useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import Link from "next/link";
+import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCurrentUser } from "@/hooks";
-import { Plus, ChefHat, Clock, Image, Search } from "lucide-react";
+import { useCurrentUser, useDebounce } from "@/hooks";
+import { Plus, ChefHat, Clock, Image as ImageIcon, Search } from "lucide-react";
 
 export function Dashboard() {
   const { user, isLoading: userLoading } = useCurrentUser();
   const bakedGoods = useQuery(api.bakedGoods.listMyBakedGoods);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
 
   const filteredBakedGoods = useMemo(() => {
-    if (!bakedGoods || !search.trim()) return bakedGoods;
-    const query = search.toLowerCase();
+    if (!bakedGoods || !debouncedSearch.trim()) return bakedGoods;
+    const query = debouncedSearch.toLowerCase();
     return bakedGoods.filter(
       (bg) => bg.name.toLowerCase().includes(query) || bg.description?.toLowerCase().includes(query)
     );
-  }, [bakedGoods, search]);
+  }, [bakedGoods, debouncedSearch]);
 
   const firstName = user?.name?.split(" ")[0] || user?.username || "Baker";
 
@@ -106,14 +108,16 @@ export function Dashboard() {
                 <Card className="overflow-hidden group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer h-full">
                   <div className="h-48 relative bg-muted overflow-hidden">
                     {bg.firstPhotoUrl ? (
-                      <img
+                      <NextImage
                         src={bg.firstPhotoUrl}
                         alt={`Photo of ${bg.name}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
-                        <Image className="h-12 w-12 text-muted-foreground/50" />
+                        <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
                       </div>
                     )}
                   </div>
