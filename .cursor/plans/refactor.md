@@ -36,7 +36,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/tools/layout.tsx`
       All three use `redirect()` from `next/navigation` inside `useEffect`. That API is server-only and throws in client components; use `router.replace('/')` instead. The layout files are higher impact since they gate entire route subtrees. Longer-term, move auth enforcement into middleware so it runs at the edge before any page renders.
 
-- [ ] **`syncUser` errors silently swallowed and trigger an infinite loop**
+- [x] **`syncUser` errors silently swallowed and trigger an infinite loop**
       `apps/web/src/hooks/use-current-user.ts`
       `syncUser()` is called with no `.catch()`. If it throws, the user exists in Clerk but not Convex, breaking all queries silently. The `useEffect` dependency also causes the sync to re-trigger on every render when it fails. Add error handling and a ref guard.
 
@@ -189,7 +189,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/providers.tsx`
       Replace the non-null assertion with an explicit guard and a helpful error message.
 
-- [ ] **`auth.config.ts` gives no guidance if `CLERK_JWT_ISSUER_DOMAIN` is undefined**
+- [x] **`auth.config.ts` gives no guidance if `CLERK_JWT_ISSUER_DOMAIN` is undefined**
       `packages/backend/convex/auth.config.ts`
       If the env var is missing, JWT validation fails with a confusing error. Add a startup guard.
 
