@@ -1,0 +1,28 @@
+# Bakery
+
+> The professional-grade toolkit for home bakers. Store recipes, track every variation with precision, and master the science behind every loaf.
+
+Bakery is a web application for at-home bakers who want to document and improve their baking. Users can create a personal recipe journal, log multiple iterations of each recipe, track what changed between bakes (hydration, salt percentage, timing, technique), and see how their results evolved over time.
+
+## Features
+
+- **Recipe Journal**: Store and organize all your recipes in one place. Each recipe (called a "baked good") can have many iterations so you can experiment freely without losing previous versions.
+- **Iteration Tracking**: Log each bake with notes, difficulty rating, total time, and photos. Compare iterations to understand what worked and what didn't.
+- **Baker's Math Calculator**: Calculate baker's percentages instantly. Enter your flour weight and all other ingredients scale proportionally. Available at `/tools/calculator`.
+- **Ingredient Substitutions**: Search a curated database of common baking ingredient substitutions. Never let a missing ingredient stop a bake. Available at `/tools/substitutions`.
+- **Community Bakes**: Browse recipes shared publicly by other bakers in the community.
+
+## Public Tools (no login required)
+
+- Baker's Math Calculator: https://www.thebakery.app/tools/calculator
+- Ingredient Substitutions: https://www.thebakery.app/tools/substitutions
+
+## Tech Stack
+
+- Next.js (App Router) frontend hosted at https://www.thebakery.app
+- Convex real-time backend for data storage
+- Clerk for authentication
+
+## Optional
+
+- Sitemap: https://www.thebakery.app/sitemap.xml

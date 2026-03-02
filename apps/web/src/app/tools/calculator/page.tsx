@@ -1,6 +1,17 @@
-"use client";
-
+import type { Metadata } from "next";
 import { BakersMathCalculator } from "@/components/bakers-math-calculator";
+
+export const metadata: Metadata = {
+  title: "Baker's Math Calculator",
+  description:
+    "Scale recipes instantly using baker's percentages. Adjust the flour amount and watch all other ingredients scale proportionally.",
+  openGraph: {
+    title: "Baker's Math Calculator | Bakery",
+    description:
+      "Scale recipes instantly using baker's percentages. Adjust the flour amount and watch all other ingredients scale proportionally.",
+    url: "https://www.thebakery.app/tools/calculator",
+  },
+};
 
 export default function CalculatorPage() {
   return (
