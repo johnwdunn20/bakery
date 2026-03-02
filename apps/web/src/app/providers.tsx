@@ -10,7 +10,7 @@ const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider signInFallbackRedirectUrl="/my-bakery" signUpFallbackRedirectUrl="/my-bakery">
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}

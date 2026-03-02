@@ -147,8 +147,10 @@ export function Dashboard() {
                   <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <Plus className="h-6 w-6 text-primary" />
                   </div>
-                  <p className="font-medium">Add New Baked Good</p>
-                  <p className="text-sm text-muted-foreground">Start a new baking experiment</p>
+                  <p className="font-medium">What Will You Bake Next?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Every great recipe starts somewhere
+                  </p>
                 </div>
               </Card>
             </Link>
