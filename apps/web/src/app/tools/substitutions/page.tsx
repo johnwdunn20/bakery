@@ -1,6 +1,17 @@
-"use client";
-
+import type { Metadata } from "next";
 import { SubstitutionSearch } from "@/components/substitution-search";
+
+export const metadata: Metadata = {
+  title: "Ingredient Substitutions",
+  description:
+    "Never let a missing ingredient stop your bake. Search for common substitutions and alternatives for hundreds of baking ingredients.",
+  openGraph: {
+    title: "Ingredient Substitutions | Bakery",
+    description:
+      "Never let a missing ingredient stop your bake. Search for common substitutions and alternatives for hundreds of baking ingredients.",
+    url: "https://www.thebakery.app/tools/substitutions",
+  },
+};
 
 export default function SubstitutionsPage() {
   return (

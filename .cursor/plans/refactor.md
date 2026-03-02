@@ -22,9 +22,9 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `packages/backend/convex/users.ts`
       Any unauthenticated caller can invoke this to create records in the database. Change to `internalMutation`.
 
-- [ ] **Clerk middleware file may never run**
+- [x] **Clerk middleware file naming**
       `apps/web/src/proxy.ts`
-      Next.js only picks up middleware from a file named exactly `middleware.ts` in `src/`. If this file is truly `proxy.ts`, `clerkMiddleware()` is never invoked and there is zero edge-level auth protection. Rename to `middleware.ts`.
+      Next.js now supports `proxy.ts` as the middleware filename (in addition to `middleware.ts`). The file correctly exports `clerkMiddleware()` and the `config` matcher, so edge-level auth protection is active.
 
 ---
 
@@ -34,7 +34,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/my-bakery/page.tsx`
       `apps/web/src/app/baked-goods/layout.tsx`
       `apps/web/src/app/tools/layout.tsx`
-      All three use `redirect()` from `next/navigation` inside `useEffect`. That API is server-only and throws in client components; use `router.replace('/')` instead. The layout files are higher impact since they gate entire route subtrees. Longer-term, move auth enforcement into middleware so it runs at the edge before any page renders.
+      All three use `redirect()` from `next/navigation` inside `useEffect`. That function is designed to be called during rendering, not in a post-render side effect; use `router.replace('/')` instead. The layout files are higher impact since they gate entire route subtrees. Longer-term, move auth enforcement into middleware so it runs at the edge before any page renders.
 
 - [x] **`syncUser` errors silently swallowed and trigger an infinite loop**
       `apps/web/src/hooks/use-current-user.ts`
@@ -50,7 +50,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 
 - [ ] **N+1 query patterns in `listMyBakedGoods` and `getBakedGoodWithIterations`**
       `packages/backend/convex/bakedGoods.ts`
-      For every baked good, separate queries fetch all its iterations and then all photos for the most recent one. With 20 baked goods at 10 iterations each, this is 200+ queries per page load. Denormalize a `coverPhotoUrl` field or batch lookups.
+      For every baked good, separate queries fetch all its iterations and then all photos for the most recent one. With 20 baked goods this is ~42 queries per page load (2 fixed + 2 per baked good), and `getBakedGoodWithIterations` adds another N queries for photo lookups (1 per iteration). Denormalize a `coverPhotoUrl` field or batch lookups.
 
 - [ ] **`bakeDate` timezone bug — two distinct failure modes**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`

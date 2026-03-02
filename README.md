@@ -48,6 +48,9 @@ A professional-grade recipe management and experimentation platform for at-home 
   - **Baker Profiles:** Build your baking legacy. Showcase your signature bakes, expertise levels, and contribution history.
   - **Feedback:** Upvote and comment on published recipes to help others succeed.
 
+- **General**
+  - I need a way users can report bugs/feature requests
+
 ## 🛠 Tech Stack
 
 - **Frontend:** Next.js 15 (App Router), Tailwind CSS, Shadcn UI
