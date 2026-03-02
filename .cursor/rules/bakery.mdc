@@ -24,7 +24,6 @@ globs: **/*
 - All database schema changes go in `packages/backend/convex/schema.ts`
 - Convex functions live in `packages/backend/convex/` (e.g., `users.ts`, `orders.ts`)
 - Always use the generated `api` object for type-safe function calls
-- Run `pnpm convex:dev` from root to start Convex dev server
 
 ## React/Next.js Patterns
 
@@ -38,30 +37,6 @@ globs: **/*
 - Tailwind CSS for utility classes
 - Shadcn UI for pre-built components (New York style)
 - Follow the established component patterns in `apps/web/src/components/ui`
-
-## Commands
-
-- `pnpm dev` - Start all dev servers (Turborepo)
-- `pnpm build` - Build all packages
-- `pnpm lint` - Run linting across all packages
-- `pnpm typecheck` - Run TypeScript type checking
-- `pnpm format` - Format code with Prettier
-- `pnpm convex:dev` - Start Convex dev server only
-- `pnpm convex:deploy` - Deploy Convex to production
-
-## Adding New Packages
-
-1. Create directory in `packages/`
-2. Run `pnpm init` in the new directory
-3. Extend `tsconfig.base.json` in the package's tsconfig
-4. Add to consuming apps with `@bakery/package-name@workspace:*`
-5. Run `pnpm install` from root
-
-## Environment Variables
-
-- `NEXT_PUBLIC_CONVEX_URL` - Convex deployment URL
-- Never commit `.env.local` files
-- Use `.env.example` as a template
 
 # Application Purpose
 

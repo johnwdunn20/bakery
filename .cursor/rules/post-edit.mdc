@@ -1,0 +1,15 @@
+---
+description: Post-edit validation checklist — run after completing changes
+alwaysApply: true
+---
+
+# Post-Edit Validation
+
+After completing file edits, run these steps in order:
+
+1. **Format**: `pnpm format`
+2. **Typecheck**: `pnpm typecheck` — fix any errors you introduced
+3. **Check running terminals**: If `pnpm dev` or `pnpm convex:dev` are already running in a terminal, read their output and fix any new errors
+4. **Push Convex changes** (conditional): If you modified files in `packages/backend/convex/`, ensure `pnpm convex:dev` is running to sync changes to the deployment
+
+Do NOT start `pnpm dev` or `pnpm convex:dev` just for validation — only check them if they are already running.
