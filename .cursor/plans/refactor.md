@@ -30,7 +30,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 
 ## High (Auth, Data Integrity, Performance)
 
-- [ ] **Route protection is client-side only, and `redirect()` is misused in client components**
+- [x] **Route protection is client-side only, and `redirect()` is misused in client components**
       `apps/web/src/app/my-bakery/page.tsx`
       `apps/web/src/app/baked-goods/layout.tsx`
       `apps/web/src/app/tools/layout.tsx`
@@ -40,41 +40,41 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/hooks/use-current-user.ts`
       `syncUser()` is called with no `.catch()`. If it throws, the user exists in Clerk but not Convex, breaking all queries silently. The `useEffect` dependency also causes the sync to re-trigger on every render when it fails. Add error handling and a ref guard.
 
-- [ ] **No backend validation for `difficulty`, `rating`, `totalTime`, or `name`**
+- [x] **No backend validation for `difficulty`, `rating`, `totalTime`, or `name`**
       `packages/backend/convex/bakedGoods.ts`
       `difficulty` is a free-form string, `rating` accepts any number (including -1 or 999), `totalTime` accepts negatives, and `name: ""` is valid. The UI constrains these but a direct API call bypasses all of it. Add `v.union` / range checks on the backend.
 
-- [ ] **`listCommunityBakedGoods` does a full table scan**
+- [x] **`listCommunityBakedGoods` does a full table scan**
       `packages/backend/convex/bakedGoods.ts`
       `ctx.db.query("bakedGoods").collect()` loads the entire table into memory then slices to 12. Will time out as data grows. Use `.order("desc").take(12)` with an appropriate index instead.
 
-- [ ] **N+1 query patterns in `listMyBakedGoods` and `getBakedGoodWithIterations`**
+- [x] **N+1 query patterns in `listMyBakedGoods` and `getBakedGoodWithIterations`**
       `packages/backend/convex/bakedGoods.ts`
       For every baked good, separate queries fetch all its iterations and then all photos for the most recent one. With 20 baked goods this is ~42 queries per page load (2 fixed + 2 per baked good), and `getBakedGoodWithIterations` adds another N queries for photo lookups (1 per iteration). Denormalize a `coverPhotoUrl` field or batch lookups.
 
-- [ ] **`bakeDate` timezone bug — two distinct failure modes**
+- [x] **`bakeDate` timezone bug — two distinct failure modes**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       Two separate issues: (1) **Default date initialization** — `new Date().toISOString().slice(0, 10)` uses UTC, so a US user at 9 PM PST on the 10th sees the 11th pre-filled in the form. Use local date formatting instead (e.g. `date.toLocaleDateString('en-CA')`). (2) **Stored date parsing** — `new Date("2024-01-15").getTime()` parses as UTC midnight; when displayed with `toLocaleDateString()` west of UTC the date appears one day earlier. Use `new Date(bakeDate + "T12:00:00")` to anchor to local noon.
 
-- [ ] **Iteration/edit pages fetch full `getBakedGoodWithIterations` just for the breadcrumb name**
+- [x] **Iteration/edit pages fetch full `getBakedGoodWithIterations` just for the breadcrumb name**
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       Loads all iterations and all their photos just to get the baked good name. Add a lightweight `getBakedGood` query instead.
 
-- [ ] **Unoptimized images throughout the app**
+- [x] **Unoptimized images throughout the app**
       `apps/web/src/components/dashboard.tsx`, iteration pages, `photo-dropzone.tsx`
       Plain `<img>` tags are used instead of Next.js `<Image>`. For a photo-heavy app this means no automatic resizing, no WebP/AVIF conversion, and no lazy loading. Swap to `<Image>` from `next/image`.
 
-- [ ] **No form validation library — manual checks only**
+- [x] **No form validation library — manual checks only**
       All form pages (`new/page.tsx`, `edit/page.tsx`, `baked-goods/new/page.tsx`)
       Forms rely on ad-hoc `if (!field.trim())` guards. Zod schemas already exist in `packages/shared/src/validation.ts` but are unused. Integrate `react-hook-form` with `@hookform/resolvers/zod` and add domain schemas for `bakedGood` and `recipeIteration`.
 
-- [ ] **No optimistic updates on mutations**
+- [x] **No optimistic updates on mutations**
       All components triggering `deleteBakedGood`, `updateBakedGood`, `updateIteration`, etc.
       The UI sets a loading state and waits for the server round-trip before reflecting changes. Convex supports optimistic updates in `useMutation`; adding them would make the UI feel instant and reduce perceived latency.
 
-- [ ] **Search input not debounced**
+- [x] **Search input not debounced**
       `apps/web/src/components/dashboard.tsx`
       The search filter re-runs on every keystroke. As the baked goods list grows this will cause UI jank. Wrap the search value in a `useDebounce` hook.
 
@@ -161,7 +161,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       Move to `packages/shared/src/constants.ts`.
 
-- [ ] **`validation.ts` Zod schemas are dead code**
+- [x] **`validation.ts` Zod schemas are dead code**
       `packages/shared/src/validation.ts`
       `emailSchema` and `paginationSchema` are never imported. No domain-level validation schemas exist for `bakedGood` or `recipeIteration`.
 
