@@ -345,45 +345,43 @@ export default function IterationEditPage() {
             </div>
             <div className="space-y-2">
               <Label>Bake date</Label>
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                      disabled={isSubmitting}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {bakeDate
-                        ? new Date(bakeDate + "T12:00:00").toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={bakeDate ? new Date(bakeDate + "T12:00:00") : undefined}
-                      onSelect={(date) =>
-                        setValue("bakeDate", date ? date.toLocaleDateString("en-CA") : "")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isSubmitting}
-                  onClick={() => setValue("bakeDate", new Date().toLocaleDateString("en-CA"))}
-                >
-                  Today
-                </Button>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    disabled={isSubmitting}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {bakeDate
+                      ? new Date(bakeDate + "T12:00:00").toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={bakeDate ? new Date(bakeDate + "T12:00:00") : undefined}
+                    onSelect={(date) =>
+                      setValue("bakeDate", date ? date.toLocaleDateString("en-CA") : "")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isSubmitting}
+                onClick={() => setValue("bakeDate", new Date().toLocaleDateString("en-CA"))}
+              >
+                Today
+              </Button>
               {errors.bakeDate && (
                 <p className="text-sm text-destructive">{errors.bakeDate.message}</p>
               )}
@@ -427,7 +425,7 @@ export default function IterationEditPage() {
             </div>
             {serverError && <p className="text-sm text-destructive">{serverError}</p>}
           </CardContent>
-          <CardFooter className="gap-2">
+          <CardFooter className="gap-2 pt-6">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save changes"}
             </Button>
