@@ -16,7 +16,7 @@ export function SubstitutionSearch() {
   );
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg border-primary/20 bg-background/50 backdrop-blur">
+    <Card className="w-full max-w-2xl mx-auto shadow-lg border-primary/20 bg-card">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Ingredient Substitution Guide</CardTitle>
         <CardDescription>Never let a missing ingredient stop your bake.</CardDescription>

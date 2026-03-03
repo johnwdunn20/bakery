@@ -24,7 +24,7 @@ export function SplashPage() {
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
       {/* Header for splash page */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground text-sm">
@@ -56,8 +56,8 @@ export function SplashPage() {
       {/* Hero Section */}
       <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10 opacity-20 pointer-events-none">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary rounded-full blur-[120px]" />
+          <div className="absolute top-0 right-0 w-[40rem] h-[40rem] rounded-full bg-[radial-gradient(circle,_var(--color-primary)_0%,_transparent_70%)]" />
+          <div className="absolute bottom-0 left-0 w-[40rem] h-[40rem] rounded-full bg-[radial-gradient(circle,_var(--color-secondary)_0%,_transparent_70%)]" />
         </div>
 
         <div className="max-w-4xl mx-auto text-center space-y-8">
