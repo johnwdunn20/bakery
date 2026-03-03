@@ -162,7 +162,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Back to Home">
-                  <Link href="/">
+                  <Link href="/welcome">
                     <Home className="size-4" />
                     <span>Home</span>
                   </Link>
