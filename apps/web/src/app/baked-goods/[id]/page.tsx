@@ -420,25 +420,29 @@ export default function BakedGoodDetailPage() {
       </div>
 
       <Card>
-        <CardHeader
-          className={
-            hasIterations ? "flex flex-row items-start justify-between space-y-0" : undefined
-          }
-        >
-          <div>
-            <CardTitle>Iterations</CardTitle>
-            <CardDescription>
-              Recipe iterations track each time you bake this good—ingredients, timing, and notes.
-            </CardDescription>
+        <CardHeader>
+          <div
+            className={
+              hasIterations
+                ? "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"
+                : undefined
+            }
+          >
+            <div>
+              <CardTitle>Iterations</CardTitle>
+              <CardDescription>
+                Recipe iterations track each time you bake this good—ingredients, timing, and notes.
+              </CardDescription>
+            </div>
+            {hasIterations && (
+              <Button asChild size="sm" className="self-start shrink-0">
+                <Link href={`/baked-goods/${id}/iterations/new`}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add iteration
+                </Link>
+              </Button>
+            )}
           </div>
-          {hasIterations && (
-            <Button asChild size="sm">
-              <Link href={`/baked-goods/${id}/iterations/new`}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add iteration
-              </Link>
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
           {!hasIterations ? (
@@ -484,13 +488,19 @@ export default function BakedGoodDetailPage() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 max-w-[200px] sm:max-w-none"
+                    >
                       {sortOption.startsWith("date") ? (
-                        <ArrowDown className={sortOption === "date-asc" ? "rotate-180" : ""} />
+                        <ArrowDown
+                          className={`shrink-0 ${sortOption === "date-asc" ? "rotate-180" : ""}`}
+                        />
                       ) : (
-                        <Star className="h-4 w-4" />
+                        <Star className="h-4 w-4 shrink-0" />
                       )}
-                      {SORT_LABELS[sortOption]}
+                      <span className="truncate">{SORT_LABELS[sortOption]}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
