@@ -22,7 +22,7 @@ export const bakedGoodSchema = z.object({
 export const iterationSchema = z.object({
   recipeContent: z.string().min(1, "Recipe content is required"),
   difficulty: z.enum(DIFFICULTIES, { message: "Select a difficulty" }),
-  totalTime: z.number().int().min(1, "Total time must be at least 1 minute"),
+  totalTime: z.coerce.number().int().min(1, "Total time must be at least 1 minute"),
   bakeDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
   rating: z.number().min(1).max(5).optional(),
   notes: z.string().optional(),

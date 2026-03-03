@@ -14,15 +14,6 @@ A professional-grade recipe management and experimentation platform for at-home 
 
 ### For Registered Bakers
 
-- **Elisabeth MVP**
-  - Store a type of baked good and allow for multiple recipes/bakes under that
-  - Rating system (both internal and from others)
-    - Upload photos of final result
-  - Difficulty Rating
-  - Link to a recipe website
-  - Free form notes on the recipe side and the result side
-  - Allow historical adds (backdating)
-  - Allow users to set a default photo
 - **Post MVP**
   - Upload a recipe from a website or a photo -> put into UI
     - V2 is pulling out ingredients into our own tables

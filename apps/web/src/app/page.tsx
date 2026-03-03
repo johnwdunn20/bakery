@@ -1,43 +1,57 @@
-import type { Metadata } from "next";
-import { SplashPage } from "@/components/splash-page";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Bakery — Stop Guessing. Start Perfecting.",
-  description:
-    "The professional-grade toolkit for home bakers. Store recipes, track every variation, calculate baker's percentages, and find ingredient substitutions instantly.",
-  openGraph: {
-    title: "Bakery — Stop Guessing. Start Perfecting.",
-    description:
-      "The professional-grade toolkit for home bakers. Store recipes, track every variation, calculate baker's percentages, and find ingredient substitutions instantly.",
-    url: "https://www.thebakery.app",
-  },
-};
+import { useCurrentUser } from "@/hooks";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Dashboard } from "@/components/dashboard";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserButton } from "@clerk/nextjs";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "Bakery",
-  url: "https://www.thebakery.app",
-  description:
-    "The professional-grade toolkit for home bakers. Store recipes, track variations with precision, and master the math behind every loaf.",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: "https://www.thebakery.app/tools/substitutions?q={search_term_string}",
-    },
-    "query-input": "required name=search_term_string",
-  },
-};
+export default function MyBakeryPage() {
+  const { user, isLoading, isSignedIn } = useCurrentUser();
+  const router = useRouter();
 
-export default function Home() {
+  useEffect(() => {
+    if (!isLoading && !isSignedIn) {
+      router.replace("/welcome");
+    }
+  }, [isLoading, isSignedIn, router]);
+
+  if (isLoading || !isSignedIn || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 rounded-lg bg-primary/20 animate-pulse" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <SplashPage />
-    </>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="flex-1">
+            <h1 className="font-semibold">My Bakery</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <UserButton />
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-auto">
+          <Dashboard />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

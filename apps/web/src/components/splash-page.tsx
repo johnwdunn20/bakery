@@ -35,12 +35,12 @@ export function SplashPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <ThemeToggle />
             <SignedOut>
-              <SignInButton>
+              <SignInButton forceRedirectUrl="/">
                 <Button variant="ghost" size="sm" className="sm:size-default">
                   Sign In
                 </Button>
               </SignInButton>
-              <SignUpButton>
+              <SignUpButton forceRedirectUrl="/">
                 <Button size="sm" className="sm:size-default">
                   Get Started
                 </Button>
@@ -78,7 +78,7 @@ export function SplashPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-500">
             <SignedOut>
-              <SignUpButton>
+              <SignUpButton forceRedirectUrl="/">
                 <Button
                   size="lg"
                   className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full shadow-lg shadow-primary/20"
@@ -93,7 +93,7 @@ export function SplashPage() {
                 size="lg"
                 className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full shadow-lg shadow-primary/20"
               >
-                <Link href="/my-bakery">
+                <Link href="/">
                   Go to My Bakery <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -243,7 +243,7 @@ export function SplashPage() {
               )}
             </ul>
             <SignedOut>
-              <SignUpButton>
+              <SignUpButton forceRedirectUrl="/">
                 <Button size="lg" variant="secondary" className="h-14 px-8 text-lg rounded-full">
                   Join to try Bake Mode
                 </Button>
@@ -256,7 +256,7 @@ export function SplashPage() {
                 variant="secondary"
                 className="h-14 px-8 text-lg rounded-full"
               >
-                <Link href="/my-bakery">Go to My Bakery</Link>
+                <Link href="/">Go to My Bakery</Link>
               </Button>
             </SignedIn>
           </div>

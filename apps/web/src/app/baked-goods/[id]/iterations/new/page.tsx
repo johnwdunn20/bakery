@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { iterationSchema, DIFFICULTIES } from "@bakery/shared/validation";
@@ -82,7 +82,7 @@ export default function NewIterationPage() {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<IterationFormData>({
-    resolver: zodResolver(iterationSchema),
+    resolver: zodResolver(iterationSchema) as Resolver<IterationFormData>,
     defaultValues: {
       recipeContent: "",
       difficulty: "Medium",
@@ -182,7 +182,7 @@ export default function NewIterationPage() {
       <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Baked good not found.</p>
         <Button variant="link" asChild>
-          <Link href="/my-bakery">Back to My Bakery</Link>
+          <Link href="/">Back to My Bakery</Link>
         </Button>
       </div>
     );
@@ -194,7 +194,7 @@ export default function NewIterationPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/my-bakery">My Bakery</Link>
+              <Link href="/">My Bakery</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -295,45 +295,43 @@ export default function NewIterationPage() {
             </div>
             <div className="space-y-2">
               <Label>Bake date</Label>
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                      disabled={isSubmitting}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {bakeDate
-                        ? new Date(bakeDate + "T12:00:00").toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={bakeDate ? new Date(bakeDate + "T12:00:00") : undefined}
-                      onSelect={(date) =>
-                        setValue("bakeDate", date ? date.toLocaleDateString("en-CA") : "")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isSubmitting}
-                  onClick={() => setValue("bakeDate", new Date().toLocaleDateString("en-CA"))}
-                >
-                  Today
-                </Button>
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    disabled={isSubmitting}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {bakeDate
+                      ? new Date(bakeDate + "T12:00:00").toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={bakeDate ? new Date(bakeDate + "T12:00:00") : undefined}
+                    onSelect={(date) =>
+                      setValue("bakeDate", date ? date.toLocaleDateString("en-CA") : "")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isSubmitting}
+                onClick={() => setValue("bakeDate", new Date().toLocaleDateString("en-CA"))}
+              >
+                Today
+              </Button>
               {errors.bakeDate && (
                 <p className="text-sm text-destructive">{errors.bakeDate.message}</p>
               )}
@@ -424,7 +422,7 @@ export default function NewIterationPage() {
             </div>
             {serverError && <p className="text-sm text-destructive">{serverError}</p>}
           </CardContent>
-          <CardFooter className="gap-2">
+          <CardFooter className="gap-2 pt-6">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating…" : "Add iteration"}
             </Button>
