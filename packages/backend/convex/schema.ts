@@ -19,6 +19,7 @@ export default defineSchema({
     authorId: v.id("users"),
     name: v.string(),
     description: v.optional(v.string()),
+    coverPhotoStorageId: v.optional(v.id("_storage")),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_author", ["authorId"]),

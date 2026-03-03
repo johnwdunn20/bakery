@@ -49,6 +49,7 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarClock,
+  Camera,
   Copy,
   Image,
   List,
@@ -58,6 +59,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+import { CoverPhotoPicker } from "@/components/ui/cover-photo-picker";
 
 type ViewMode = "list" | "timeline";
 type SortOption = "date-desc" | "date-asc" | "rating-desc" | "rating-asc";
@@ -150,6 +152,7 @@ export default function BakedGoodDetailPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -418,6 +421,37 @@ export default function BakedGoodDetailPage() {
           </SheetContent>
         </Sheet>
       </div>
+
+      {hasIterations && (
+        <>
+          <div className="flex items-center gap-4">
+            <div className="shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+              {bakedGood.coverPhotoUrl ||
+              sortedIterations.find((it) => it.firstPhotoUrl)?.firstPhotoUrl ? (
+                <img
+                  src={
+                    bakedGood.coverPhotoUrl ||
+                    sortedIterations.find((it) => it.firstPhotoUrl)!.firstPhotoUrl!
+                  }
+                  alt={`Cover photo of ${bakedGood.name}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setIsCoverPickerOpen(true)}>
+              <Camera className="mr-2 h-4 w-4" />
+              Change photo
+            </Button>
+          </div>
+          <CoverPhotoPicker
+            bakedGoodId={id as Id<"bakedGoods">}
+            open={isCoverPickerOpen}
+            onOpenChange={setIsCoverPickerOpen}
+          />
+        </>
+      )}
 
       <Card>
         <CardHeader>

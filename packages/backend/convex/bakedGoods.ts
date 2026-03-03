@@ -162,7 +162,9 @@ export const listMyBakedGoods = query({
         const mostRecentIteration = iterations.sort((a, b) => b.bakeDate - a.bakeDate)[0];
 
         let firstPhotoUrl: string | null = null;
-        if (mostRecentIteration?.firstPhotoStorageId) {
+        if (bg.coverPhotoStorageId) {
+          firstPhotoUrl = await ctx.storage.getUrl(bg.coverPhotoStorageId);
+        } else if (mostRecentIteration?.firstPhotoStorageId) {
           firstPhotoUrl = await ctx.storage.getUrl(mostRecentIteration.firstPhotoStorageId);
         }
 
@@ -223,6 +225,11 @@ export const getBakedGoodWithIterations = query({
     const lastBakedDate =
       iterations.length > 0 ? Math.max(...iterations.map((i) => i.bakeDate)) : null;
 
+    let coverPhotoUrl: string | null = null;
+    if (bakedGood.coverPhotoStorageId) {
+      coverPhotoUrl = await ctx.storage.getUrl(bakedGood.coverPhotoStorageId);
+    }
+
     return {
       ...bakedGood,
       iterations,
@@ -230,6 +237,7 @@ export const getBakedGoodWithIterations = query({
       avgRating,
       bestRating,
       lastBakedDate,
+      coverPhotoUrl,
     };
   },
 });
@@ -250,6 +258,59 @@ export const getBakedGood = query({
     if (!bakedGood || bakedGood.authorId !== user._id) return null;
 
     return bakedGood;
+  },
+});
+
+export const getAllBakedGoodPhotos = query({
+  args: { bakedGoodId: v.id("bakedGoods") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) return null;
+
+    const bakedGood = await ctx.db.get(args.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) return null;
+
+    const iterations = await ctx.db
+      .query("recipeIterations")
+      .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.bakedGoodId))
+      .collect();
+
+    const sortedIterations = iterations.sort((a, b) => b.bakeDate - a.bakeDate);
+
+    const groups = await Promise.all(
+      sortedIterations.map(async (it) => {
+        const photos = await ctx.db
+          .query("iterationPhotos")
+          .withIndex("by_iteration", (q) => q.eq("iterationId", it._id))
+          .collect();
+        photos.sort((a, b) => a.order - b.order);
+
+        const photosWithUrls = await Promise.all(
+          photos.map(async (p) => ({
+            _id: p._id,
+            storageId: p.storageId,
+            url: await ctx.storage.getUrl(p.storageId),
+          }))
+        );
+
+        return {
+          iterationId: it._id,
+          bakeDate: it.bakeDate,
+          photos: photosWithUrls,
+        };
+      })
+    );
+
+    return {
+      coverPhotoStorageId: bakedGood.coverPhotoStorageId ?? null,
+      groups: groups.filter((g) => g.photos.length > 0),
+    };
   },
 });
 
@@ -349,12 +410,8 @@ export const addIterationPhoto = mutation({
       createdAt: now,
     });
 
-    if (existingPhotos.length === 0 || order === 0) {
-      const firstStorageId =
-        order === 0
-          ? args.storageId
-          : (existingPhotos.sort((a, b) => a.order - b.order)[0]?.storageId ?? args.storageId);
-      await ctx.db.patch(args.iterationId, { firstPhotoStorageId: firstStorageId });
+    if (!iteration.firstPhotoStorageId) {
+      await ctx.db.patch(args.iterationId, { firstPhotoStorageId: args.storageId });
     }
 
     return photoId;
@@ -387,16 +444,102 @@ export const deleteIterationPhoto = mutation({
     await ctx.storage.delete(photo.storageId);
     await ctx.db.delete(args.id);
 
-    const remainingPhotos = await ctx.db
-      .query("iterationPhotos")
-      .withIndex("by_iteration", (q) => q.eq("iterationId", photo.iterationId))
-      .collect();
-    remainingPhotos.sort((a, b) => a.order - b.order);
-    await ctx.db.patch(photo.iterationId, {
-      firstPhotoStorageId: remainingPhotos[0]?.storageId,
-    });
+    if (iteration.firstPhotoStorageId === photo.storageId) {
+      const remainingPhotos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", photo.iterationId))
+        .collect();
+      remainingPhotos.sort((a, b) => a.order - b.order);
+      await ctx.db.patch(photo.iterationId, {
+        firstPhotoStorageId: remainingPhotos[0]?.storageId,
+      });
+    }
+
+    if (bakedGood.coverPhotoStorageId === photo.storageId) {
+      await ctx.db.patch(bakedGood._id, { coverPhotoStorageId: undefined });
+    }
 
     return args.id;
+  },
+});
+
+export const setIterationCoverPhoto = mutation({
+  args: {
+    iterationId: v.id("recipeIterations"),
+    photoId: v.id("iterationPhotos"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const iteration = await ctx.db.get(args.iterationId);
+    if (!iteration) throw new Error("Iteration not found");
+
+    const bakedGood = await ctx.db.get(iteration.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Iteration not found or not owned by you");
+    }
+
+    const photo = await ctx.db.get(args.photoId);
+    if (!photo || photo.iterationId !== args.iterationId) {
+      throw new Error("Photo not found in this iteration");
+    }
+
+    await ctx.db.patch(args.iterationId, {
+      firstPhotoStorageId: photo.storageId,
+    });
+  },
+});
+
+export const setBakedGoodCoverPhoto = mutation({
+  args: {
+    bakedGoodId: v.id("bakedGoods"),
+    storageId: v.optional(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const bakedGood = await ctx.db.get(args.bakedGoodId);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Baked good not found or not owned by you");
+    }
+
+    if (args.storageId) {
+      const iterations = await ctx.db
+        .query("recipeIterations")
+        .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.bakedGoodId))
+        .collect();
+
+      let found = false;
+      for (const it of iterations) {
+        const photos = await ctx.db
+          .query("iterationPhotos")
+          .withIndex("by_iteration", (q) => q.eq("iterationId", it._id))
+          .collect();
+        if (photos.some((p) => p.storageId === args.storageId)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) throw new Error("Photo does not belong to this baked good");
+    }
+
+    await ctx.db.patch(args.bakedGoodId, {
+      coverPhotoStorageId: args.storageId,
+    });
   },
 });
 
@@ -510,6 +653,14 @@ export const deleteIteration = mutation({
       .query("iterationPhotos")
       .withIndex("by_iteration", (q) => q.eq("iterationId", args.id))
       .collect();
+
+    if (bakedGood.coverPhotoStorageId) {
+      const coverBeingDeleted = photos.some((p) => p.storageId === bakedGood.coverPhotoStorageId);
+      if (coverBeingDeleted) {
+        await ctx.db.patch(bakedGood._id, { coverPhotoStorageId: undefined });
+      }
+    }
+
     for (const photo of photos) {
       await ctx.storage.delete(photo.storageId);
       await ctx.db.delete(photo._id);

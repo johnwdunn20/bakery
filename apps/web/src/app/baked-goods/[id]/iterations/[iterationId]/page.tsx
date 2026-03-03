@@ -32,7 +32,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, Copy, Loader2, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, Copy, Loader2, Pencil, Star, Trash2, X } from "lucide-react";
 import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 import { PhotoGrid } from "@/components/ui/photo-dropzone";
 
@@ -79,6 +79,7 @@ export default function IterationViewPage() {
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
   const deleteIteration = useMutation(api.bakedGoods.deleteIteration);
   const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
+  const setIterationCoverPhoto = useMutation(api.bakedGoods.setIterationCoverPhoto);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -266,46 +267,74 @@ export default function IterationViewPage() {
           </CardHeader>
           <CardContent>
             <PhotoGrid>
-              {iteration.photos.map((photo, index) => (
-                <div
-                  key={photo._id}
-                  className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
-                  onClick={() => {
-                    if (photo.url) {
-                      setLightboxIndex(index);
-                      setLightboxOpen(true);
-                    }
-                  }}
-                >
-                  {photo.url ? (
-                    <Image
-                      src={photo.url}
-                      alt={`Photo ${index + 1} of ${bakedGoodName}`}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                      sizes="(max-width: 640px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                      Unavailable
-                    </div>
-                  )}
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                    disabled={deletingPhotoId !== null}
-                    aria-label="Remove photo"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPhotoToDelete(photo._id);
+              {iteration.photos.map((photo, index) => {
+                const isCover = photo.storageId === iteration.firstPhotoStorageId;
+                return (
+                  <div
+                    key={photo._id}
+                    className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
+                    onClick={() => {
+                      if (photo.url) {
+                        setLightboxIndex(index);
+                        setLightboxOpen(true);
+                      }
                     }}
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                    {photo.url ? (
+                      <Image
+                        src={photo.url}
+                        alt={`Photo ${index + 1} of ${bakedGoodName}`}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                        sizes="(max-width: 640px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                        Unavailable
+                      </div>
+                    )}
+                    {isCover ? (
+                      <div
+                        className="absolute top-2 left-2 h-8 w-8 rounded-md bg-primary flex items-center justify-center shadow-sm"
+                        title="Cover photo"
+                      >
+                        <Star className="h-4 w-4 text-primary-foreground fill-primary-foreground" />
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        className="absolute top-2 left-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        aria-label="Set as cover photo"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIterationCoverPhoto({
+                            iterationId: iterationId as Id<"recipeIterations">,
+                            photoId: photo._id,
+                          });
+                        }}
+                      >
+                        <Star className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                      disabled={deletingPhotoId !== null}
+                      aria-label="Remove photo"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPhotoToDelete(photo._id);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </PhotoGrid>
           </CardContent>
         </Card>
