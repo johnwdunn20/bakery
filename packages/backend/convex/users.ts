@@ -15,7 +15,7 @@ export const syncUser = mutation({
     }
 
     const clerkId = identity.subject;
-    const email = identity.email ?? "";
+    const email = identity.email;
     const username = identity.nickname;
 
     if (!username) {
@@ -103,7 +103,7 @@ export const syncUser = mutation({
     // Create new user
     const userId = await ctx.db.insert("users", {
       clerkId,
-      email,
+      ...(email ? { email } : {}),
       username,
       name: identity.name ?? undefined,
       imageUrl: identity.pictureUrl ?? undefined,

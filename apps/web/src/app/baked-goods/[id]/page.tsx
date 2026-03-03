@@ -113,6 +113,88 @@ function sortIterations<T extends { bakeDate: number; rating?: number | null }>(
   }
 }
 
+interface IterationCardProps {
+  it: {
+    _id: Id<"recipeIterations">;
+    bakeDate: number;
+    rating?: number;
+    difficulty: string;
+    totalTime: number;
+    recipeContent: string;
+    notes?: string;
+    firstPhotoUrl: string | null;
+  };
+  bakedGoodId: string;
+  duplicatingId: Id<"recipeIterations"> | null;
+  onDuplicate: (id: Id<"recipeIterations">) => void;
+}
+
+function IterationCard({ it, bakedGoodId, duplicatingId, onDuplicate }: IterationCardProps) {
+  return (
+    <Card className="border bg-card transition-colors hover:bg-accent/50">
+      <CardContent className="p-4 flex items-start gap-3">
+        <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+          {it.firstPhotoUrl ? (
+            <img
+              src={it.firstPhotoUrl}
+              alt={`Photo from ${formatDate(it.bakeDate)} bake`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Image className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+          )}
+        </div>
+        <Link
+          href={`/baked-goods/${bakedGoodId}/iterations/${it._id}`}
+          className="flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+        >
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-medium">{formatDate(it.bakeDate)}</span>
+            {it.rating != null && (
+              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
+                {it.rating}/5
+              </span>
+            )}
+            <span className="text-muted-foreground">
+              {it.difficulty} · {formatMinutes(it.totalTime)}
+            </span>
+          </div>
+          {(it.recipeContent || it.notes) && (
+            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+              {it.notes?.trim() || it.recipeContent?.trim().split("\n")[0] || ""}
+            </p>
+          )}
+        </Link>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={duplicatingId !== null}
+              aria-label="Duplicate iteration"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will create a new iteration with today&apos;s date, copying the recipe content,
+                difficulty, and time. You can edit it before saving.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDuplicate(it._id)}>Duplicate</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function BakedGoodDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -158,6 +240,7 @@ export default function BakedGoodDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const bakedGood = useQuery(
     api.bakedGoods.getBakedGoodWithIterations,
     id ? { id: id as Id<"bakedGoods"> } : "skip"
@@ -199,11 +282,12 @@ export default function BakedGoodDetailPage() {
 
   async function handleDeleteBakedGood() {
     setIsDeleting(true);
+    setDeleteError(null);
     try {
       await deleteBakedGood({ id: id as Id<"bakedGoods"> });
       router.push("/");
     } catch (err) {
-      setUpdateError(err instanceof Error ? err.message : "Failed to delete.");
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete.");
       setIsDeleting(false);
     }
   }
@@ -233,82 +317,14 @@ export default function BakedGoodDetailPage() {
   const lastBakedDate = bakedGood.lastBakedDate ?? null;
   const hasIterations = sortedIterations.length > 0;
 
-  function IterationCard({ it }: { it: (typeof sortedIterations)[number] }) {
-    return (
-      <Card className="border bg-card transition-colors hover:bg-accent/50">
-        <CardContent className="p-4 flex items-start gap-3">
-          <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-            {"firstPhotoUrl" in it && it.firstPhotoUrl ? (
-              <img
-                src={it.firstPhotoUrl}
-                alt={`Photo from ${formatDate(it.bakeDate)} bake`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Image className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-            )}
-          </div>
-          <Link
-            href={`/baked-goods/${id}/iterations/${it._id}`}
-            className="flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
-          >
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-medium">{formatDate(it.bakeDate)}</span>
-              {it.rating != null && (
-                <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
-                  {it.rating}/5
-                </span>
-              )}
-              <span className="text-muted-foreground">
-                {it.difficulty} · {formatMinutes(it.totalTime)}
-              </span>
-            </div>
-            {(it.recipeContent || it.notes) && (
-              <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                {it.notes?.trim() || it.recipeContent?.trim().split("\n")[0] || ""}
-              </p>
-            )}
-          </Link>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={duplicatingId !== null}
-                aria-label="Duplicate iteration"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will create a new iteration with today's date, copying the recipe content,
-                  difficulty, and time. You can edit it before saving.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={async () => {
-                    setDuplicatingId(it._id);
-                    try {
-                      const newId = await duplicateIteration({ id: it._id });
-                      router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
-                    } finally {
-                      setDuplicatingId(null);
-                    }
-                  }}
-                >
-                  Duplicate
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
-    );
+  async function handleDuplicate(iterationId: Id<"recipeIterations">) {
+    setDuplicatingId(iterationId);
+    try {
+      const newId = await duplicateIteration({ id: iterationId });
+      router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+    } finally {
+      setDuplicatingId(null);
+    }
   }
 
   return (
@@ -421,6 +437,8 @@ export default function BakedGoodDetailPage() {
           </SheetContent>
         </Sheet>
       </div>
+
+      {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
 
       {hasIterations && (
         <>
@@ -561,7 +579,12 @@ export default function BakedGoodDetailPage() {
                 <ul className="space-y-3">
                   {sortedIterations.map((it) => (
                     <li key={it._id}>
-                      <IterationCard it={it} />
+                      <IterationCard
+                        it={it}
+                        bakedGoodId={id}
+                        duplicatingId={duplicatingId}
+                        onDuplicate={handleDuplicate}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -574,7 +597,12 @@ export default function BakedGoodDetailPage() {
                         aria-hidden
                       />
                       <div className="pt-0.5">
-                        <IterationCard it={it} />
+                        <IterationCard
+                          it={it}
+                          bakedGoodId={id}
+                          duplicatingId={duplicatingId}
+                          onDuplicate={handleDuplicate}
+                        />
                       </div>
                     </div>
                   ))}

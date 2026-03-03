@@ -400,7 +400,10 @@ export const addIterationPhoto = mutation({
       .collect();
     const maxOrder =
       existingPhotos.length > 0 ? Math.max(...existingPhotos.map((p) => p.order)) : -1;
-    const order = args.order ?? maxOrder + 1;
+    let order = args.order ?? maxOrder + 1;
+    if (args.order !== undefined && existingPhotos.some((p) => p.order === order)) {
+      order = maxOrder + 1;
+    }
     const now = Date.now();
 
     const photoId = await ctx.db.insert("iterationPhotos", {

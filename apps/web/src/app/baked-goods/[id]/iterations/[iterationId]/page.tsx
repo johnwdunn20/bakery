@@ -122,6 +122,7 @@ export default function IterationViewPage() {
   }
 
   const bakedGoodName = bakedGood && "name" in bakedGood ? bakedGood.name : "Baked good";
+  const photosWithUrls = iteration.photos?.filter((p) => p.url) ?? [];
 
   return (
     <div className="p-6 md:p-8 max-w-4xl space-y-6">
@@ -275,8 +276,11 @@ export default function IterationViewPage() {
                     className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
                     onClick={() => {
                       if (photo.url) {
-                        setLightboxIndex(index);
-                        setLightboxOpen(true);
+                        const idx = photosWithUrls.findIndex((p) => p._id === photo._id);
+                        if (idx >= 0) {
+                          setLightboxIndex(idx);
+                          setLightboxOpen(true);
+                        }
                       }
                     }}
                   >
@@ -341,14 +345,10 @@ export default function IterationViewPage() {
       )}
 
       <PhotoLightbox
-        photos={
-          iteration.photos
-            ?.filter((p) => p.url)
-            .map((p, i) => ({
-              url: p.url!,
-              alt: `Photo ${i + 1} of ${bakedGoodName}`,
-            })) ?? []
-        }
+        photos={photosWithUrls.map((p, i) => ({
+          url: p.url!,
+          alt: `Photo ${i + 1} of ${bakedGoodName}`,
+        }))}
         initialIndex={lightboxIndex}
         open={lightboxOpen}
         onOpenChange={setLightboxOpen}

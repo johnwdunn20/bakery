@@ -67,8 +67,7 @@ export function PhotoLightbox({
   if (!open || photos.length === 0) return null;
 
   const currentPhoto = photos[currentIndex];
-  const hasPrev = photos.length > 1;
-  const hasNext = photos.length > 1;
+  const showNav = photos.length > 1;
 
   function goToPrev() {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
@@ -130,7 +129,7 @@ export function PhotoLightbox({
         </div>
       )}
 
-      {hasPrev && (
+      {showNav && (
         <Button
           variant="ghost"
           size="icon"
@@ -159,7 +158,7 @@ export function PhotoLightbox({
         />
       </div>
 
-      {hasNext && (
+      {showNav && (
         <Button
           variant="ghost"
           size="icon"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -97,6 +97,14 @@ export default function NewIterationPage() {
   const bakeDate = watch("bakeDate");
   const [serverError, setServerError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const selectedFilesRef = useRef(selectedFiles);
+  selectedFilesRef.current = selectedFiles;
+
+  useEffect(() => {
+    return () => {
+      selectedFilesRef.current.forEach((sf) => URL.revokeObjectURL(sf.previewUrl));
+    };
+  }, []);
 
   function handleFilesSelected(files: FileList) {
     const newFiles: SelectedFile[] = [];
@@ -162,6 +170,7 @@ export default function NewIterationPage() {
           }
         }
       }
+      selectedFiles.forEach((sf) => URL.revokeObjectURL(sf.previewUrl));
       router.push(`/baked-goods/${bakedGoodId}/iterations/${newId}`);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Failed to create iteration.");

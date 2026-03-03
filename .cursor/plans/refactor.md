@@ -82,35 +82,31 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 
 ## Medium (Logic Bugs, UX)
 
-- [ ] **`IterationCard` defined inside the render function**
+- [x] **`IterationCard` defined inside the render function**
       `apps/web/src/app/baked-goods/[id]/page.tsx`
       A component function defined inside another component is treated as a new type on every render, causing full unmount/remount of every card on any state change. Move to module scope.
 
-- [ ] **Lightbox `lightboxIndex` and filtered photo array are misaligned**
+- [x] **Lightbox `lightboxIndex` and filtered photo array are misaligned**
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx`
       The lightbox receives `photos.filter(p => p.url)` but `lightboxIndex` is set from the unfiltered grid index. If any photos have `url: null`, the wrong photo opens.
 
-- [ ] **`hasPrev` / `hasNext` in photo lightbox are identical**
+- [x] **`hasPrev` / `hasNext` in photo lightbox are identical**
       `apps/web/src/components/ui/photo-lightbox.tsx`
       Both variables are `photos.length > 1`, so Prev/Next always appear or disappear together regardless of current position.
 
-- [ ] **`duplicateIteration` drops `notes` and `rating`**
-      `packages/backend/convex/bakedGoods.ts`
-      Copies `recipeContent`, `difficulty`, `totalTime`, `sourceUrl` but silently omits `notes` and `rating`. Almost certainly unintentional.
-
-- [ ] **`addIterationPhoto` can create duplicate `order` values**
+- [x] **`addIterationPhoto` can create duplicate `order` values**
       `packages/backend/convex/bakedGoods.ts`
       When an explicit `order` is provided it is used without checking for conflicts with existing photo orders.
 
-- [ ] **`syncUser` stores `""` for missing emails, bypassing uniqueness checks**
+- [x] **`syncUser` stores `""` for missing emails, bypassing uniqueness checks**
       `packages/backend/convex/users.ts`
       `email ?? ""` stores an empty string when Clerk has no email. The uniqueness guard is skipped for `""`, so multiple accounts can share a blank email in the index.
 
-- [ ] **`URL.createObjectURL` never revoked after form submission**
+- [x] **`URL.createObjectURL` never revoked after form submission**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       Blob URLs are revoked on `removeSelectedFile` but not after a successful submission, leaking memory for the lifetime of the tab. Revoke all URLs on cleanup.
 
-- [ ] **Delete error in `handleDeleteBakedGood` shown in wrong place**
+- [x] **Delete error in `handleDeleteBakedGood` shown in wrong place**
       `apps/web/src/app/baked-goods/[id]/page.tsx`
       Errors are written to `updateError` which only renders inside the edit Sheet. Delete errors need their own state and display location.
 
