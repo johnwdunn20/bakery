@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { iterationSchema, DIFFICULTIES } from "@bakery/shared/validation";
@@ -126,7 +126,7 @@ export default function IterationEditPage() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<IterationFormData>({
-    resolver: zodResolver(iterationSchema),
+    resolver: zodResolver(iterationSchema) as Resolver<IterationFormData>,
   });
 
   const bakeDate = watch("bakeDate");
@@ -211,7 +211,7 @@ export default function IterationEditPage() {
       <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Iteration not found.</p>
         <Button variant="link" asChild>
-          <Link href={id ? `/baked-goods/${id}` : "/my-bakery"}>
+          <Link href={id ? `/baked-goods/${id}` : "/"}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to baked good
           </Link>
@@ -237,7 +237,7 @@ export default function IterationEditPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/my-bakery">My Bakery</Link>
+              <Link href="/">My Bakery</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

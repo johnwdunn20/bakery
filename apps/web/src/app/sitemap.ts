@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://www.thebakery.app",
+      url: "https://www.thebakery.app/welcome",
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,

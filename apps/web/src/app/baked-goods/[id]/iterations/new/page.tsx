@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { iterationSchema, DIFFICULTIES } from "@bakery/shared/validation";
@@ -82,7 +82,7 @@ export default function NewIterationPage() {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<IterationFormData>({
-    resolver: zodResolver(iterationSchema),
+    resolver: zodResolver(iterationSchema) as Resolver<IterationFormData>,
     defaultValues: {
       recipeContent: "",
       difficulty: "Medium",
@@ -182,7 +182,7 @@ export default function NewIterationPage() {
       <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Baked good not found.</p>
         <Button variant="link" asChild>
-          <Link href="/my-bakery">Back to My Bakery</Link>
+          <Link href="/">Back to My Bakery</Link>
         </Button>
       </div>
     );
@@ -194,7 +194,7 @@ export default function NewIterationPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/my-bakery">My Bakery</Link>
+              <Link href="/">My Bakery</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

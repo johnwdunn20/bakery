@@ -16,7 +16,7 @@ export default function ToolsLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isLoading && !isSignedIn) {
-      router.replace("/");
+      router.replace("/welcome");
     }
   }, [isLoading, isSignedIn, router]);
 

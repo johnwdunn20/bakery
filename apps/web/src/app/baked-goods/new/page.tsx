@@ -90,7 +90,7 @@ export default function NewBakedGoodPage() {
               {isSubmitting ? "Creating…" : "Create Baked Good"}
             </Button>
             <Button type="button" variant="outline" asChild disabled={isSubmitting}>
-              <Link href="/my-bakery">Cancel</Link>
+              <Link href="/">Cancel</Link>
             </Button>
           </CardFooter>
         </form>

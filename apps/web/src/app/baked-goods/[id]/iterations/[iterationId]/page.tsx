@@ -111,7 +111,7 @@ export default function IterationViewPage() {
       <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Iteration not found.</p>
         <Button variant="link" asChild>
-          <Link href={id ? `/baked-goods/${id}` : "/my-bakery"}>
+          <Link href={id ? `/baked-goods/${id}` : "/"}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to baked good
           </Link>
@@ -128,7 +128,7 @@ export default function IterationViewPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/my-bakery">My Bakery</Link>
+              <Link href="/">My Bakery</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

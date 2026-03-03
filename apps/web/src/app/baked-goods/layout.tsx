@@ -16,7 +16,7 @@ export default function BakedGoodsLayout({ children }: { children: React.ReactNo
 
   useEffect(() => {
     if (!isLoading && !isSignedIn) {
-      router.replace("/");
+      router.replace("/welcome");
     }
   }, [isLoading, isSignedIn, router]);
 

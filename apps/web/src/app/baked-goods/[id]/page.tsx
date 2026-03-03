@@ -198,7 +198,7 @@ export default function BakedGoodDetailPage() {
     setIsDeleting(true);
     try {
       await deleteBakedGood({ id: id as Id<"bakedGoods"> });
-      router.push("/my-bakery");
+      router.push("/");
     } catch (err) {
       setUpdateError(err instanceof Error ? err.message : "Failed to delete.");
       setIsDeleting(false);
@@ -219,7 +219,7 @@ export default function BakedGoodDetailPage() {
     return (
       <div className="p-6 md:p-8 max-w-4xl">
         <p className="text-muted-foreground">Baked good not found.</p>
-        <Button variant="link" onClick={() => router.push("/my-bakery")}>
+        <Button variant="link" onClick={() => router.push("/")}>
           Back to My Bakery
         </Button>
       </div>
@@ -314,7 +314,7 @@ export default function BakedGoodDetailPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/my-bakery">My Bakery</Link>
+              <Link href="/">My Bakery</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
