@@ -195,9 +195,6 @@ export function SplashPage() {
             <Button asChild variant="link" className="text-muted-foreground">
               <Link href="/terms">Terms</Link>
             </Button>
-            <Button asChild variant="link" className="text-muted-foreground">
-              <Link href="/privacy">Privacy</Link>
-            </Button>
           </div>
         </div>
       </footer>

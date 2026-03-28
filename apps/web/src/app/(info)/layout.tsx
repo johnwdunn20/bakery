@@ -34,12 +34,6 @@ export default function InfoLayout({ children }: { children: React.ReactNode }) 
             <Button asChild variant="link" size="sm" className="text-muted-foreground text-xs">
               <Link href="/terms">Terms</Link>
             </Button>
-            <Button asChild variant="link" size="sm" className="text-muted-foreground text-xs">
-              <Link href="/privacy">Privacy</Link>
-            </Button>
-            <Button asChild variant="link" size="sm" className="text-muted-foreground text-xs">
-              <Link href="/community">Community</Link>
-            </Button>
           </div>
         </div>
       </footer>

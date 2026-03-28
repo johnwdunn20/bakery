@@ -249,12 +249,6 @@ export function AppSidebar() {
           <Link href="/terms" className="hover:text-foreground transition-colors">
             Terms
           </Link>
-          <Link href="/privacy" className="hover:text-foreground transition-colors">
-            Privacy
-          </Link>
-          <Link href="/community" className="hover:text-foreground transition-colors">
-            Community
-          </Link>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
