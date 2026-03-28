@@ -3,6 +3,7 @@ import { BakersMathCalculator } from "@/components/bakers-math-calculator";
 import { SubstitutionSearch } from "@/components/substitution-search";
 import { SplashAuthNav } from "@/components/splash-auth-nav";
 import { SplashHeroCTA } from "@/components/splash-hero-cta";
+import { SplashSignInButton } from "@/components/splash-sign-in-button";
 import { SplashCommunityShowcase } from "@/components/splash-community-showcase";
 import { Microscope, Share2, Smartphone, Star } from "lucide-react";
 import Link from "next/link";
@@ -142,14 +143,7 @@ export function SplashPage() {
                 )
               )}
             </ul>
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="h-14 px-8 text-lg rounded-full"
-            >
-              <Link href="/">Go to My Bakery</Link>
-            </Button>
+            <SplashSignInButton variant="secondary" className="h-14 px-8 text-lg rounded-full" />
           </div>
           <div className="relative hidden sm:block">
             <div className="bg-background rounded-[40px] border-8 border-primary-foreground/10 p-4 shadow-2xl overflow-hidden aspect-9/16 max-w-[280px] sm:max-w-[320px] mx-auto transform lg:rotate-6">
