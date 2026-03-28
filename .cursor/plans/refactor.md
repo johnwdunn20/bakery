@@ -146,13 +146,13 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 
 ## Low (Code Quality, Type Safety)
 
-- [ ] **`formatDate` and `formatMinutes` duplicated across three files**
+- [x] **`formatDate` and `formatMinutes` duplicated across three files**
       `apps/web/src/app/baked-goods/[id]/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       Extract to `apps/web/src/lib/format.ts`.
 
-- [ ] **`DIFFICULTIES` and `TIME_PRESETS` constants duplicated**
+- [x] **`DIFFICULTIES` and `TIME_PRESETS` constants duplicated**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       Move to `packages/shared/src/constants.ts`.
@@ -161,27 +161,27 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `packages/shared/src/validation.ts`
       `emailSchema` and `paginationSchema` are never imported. No domain-level validation schemas exist for `bakedGood` or `recipeIteration`.
 
-- [ ] **`getUserByClerkId` is functionally identical to `getCurrentUser`**
+- [x] **`getUserByClerkId` is functionally identical to `getCurrentUser`**
       `packages/backend/convex/users.ts`
       One is dead code. Remove the duplicate.
 
-- [ ] **Raw `<textarea>` used instead of Shadcn `<Textarea>`**
+- [x] **Raw `<textarea>` used instead of Shadcn `<Textarea>`**
       `apps/web/src/app/baked-goods/[id]/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       Swap to the design-system component to avoid styling drift.
 
-- [ ] **`params.id` cast without runtime validation**
+- [x] **`params.id` cast without runtime validation**
       `apps/web/src/app/baked-goods/[id]/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       `params.id as string` / cast to `Id<"bakedGoods">` with no null/undefined guard.
 
-- [ ] **`index` used as React `key` for file preview list**
+- [x] **`index` used as React `key` for file preview list**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       `key={index}` causes incorrect diffing when a file is removed from the middle. Use `file.name + file.size` or a stable generated ID.
 
-- [ ] **`NEXT_PUBLIC_CONVEX_URL!` gives cryptic error if missing**
+- [x] **`NEXT_PUBLIC_CONVEX_URL!` gives cryptic error if missing**
       `apps/web/src/app/providers.tsx`
       Replace the non-null assertion with an explicit guard and a helpful error message.
 
@@ -189,11 +189,11 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `packages/backend/convex/auth.config.ts`
       If the env var is missing, JWT validation fails with a confusing error. Add a startup guard.
 
-- [ ] **`BakersMathCalculator` allows zero/negative flour values**
+- [x] **`BakersMathCalculator` allows zero/negative flour values**
       `apps/web/src/components/bakers-math-calculator.tsx`
       No `min` constraint on the flour input; results become zero or negative. Add `min="1"` and a guard.
 
-- [ ] **`group-hover` used without a `group` parent class**
+- [x] **`group-hover` used without a `group` parent class**
       `apps/web/src/components/dashboard.tsx`
       The hover color on the "Add new" icon circle never triggers because no ancestor has the `group` Tailwind class.
 

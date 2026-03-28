@@ -186,21 +186,3 @@ export const getCurrentUser = query({
     return user;
   },
 });
-
-/**
- * Get a user by their Clerk ID.
- */
-export const getUserByClerkId = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    return await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-  },
-});

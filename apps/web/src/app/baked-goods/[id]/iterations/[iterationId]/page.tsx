@@ -35,21 +35,7 @@ import {
 import { ArrowLeft, Copy, Loader2, Pencil, Star, Trash2, X } from "lucide-react";
 import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 import { PhotoGrid } from "@/components/ui/photo-dropzone";
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatMinutes(min: number) {
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
-}
+import { formatDate, formatMinutes } from "@/lib/format";
 
 const markdownComponents: Components = {
   h1: ({ children }) => <h1 className="mt-6 mb-3 text-2xl font-bold first:mt-0">{children}</h1>,
@@ -74,8 +60,8 @@ const markdownComponents: Components = {
 export default function IterationViewPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const iterationId = params.iterationId as string;
+  const id = typeof params.id === "string" ? params.id : undefined;
+  const iterationId = typeof params.iterationId === "string" ? params.iterationId : undefined;
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
   const deleteIteration = useMutation(api.bakedGoods.deleteIteration);
   const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
@@ -96,6 +82,20 @@ export default function IterationViewPage() {
     api.bakedGoods.getBakedGood,
     id ? { id: id as Id<"bakedGoods"> } : "skip"
   );
+
+  if (!id || !iterationId) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl">
+        <p className="text-muted-foreground">Page not found.</p>
+        <Button variant="link" asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to My Bakery
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (iteration === undefined) {
     return (

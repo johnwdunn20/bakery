@@ -14,6 +14,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -53,35 +54,16 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, CalendarIcon, Trash2, X, Loader2 } from "lucide-react";
-
-const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
-
-function formatDateForInput(ts: number) {
-  return new Date(ts).toLocaleDateString("en-CA");
-}
-
-function formatMinutes(min: number) {
-  if (min < 60) return `${min}m`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+import { TIME_PRESETS } from "@bakery/shared/constants";
+import { formatDate, formatMinutes, formatDateForInput } from "@/lib/format";
 
 type IterationFormData = z.infer<typeof iterationSchema>;
 
 export default function IterationEditPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const iterationId = params.iterationId as string;
+  const id = typeof params.id === "string" ? params.id : undefined;
+  const iterationId = typeof params.iterationId === "string" ? params.iterationId : undefined;
   const iteration = useQuery(
     api.bakedGoods.getIteration,
     iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
@@ -151,6 +133,20 @@ export default function IterationEditPage() {
       setInitialized(true);
     }
   }, [iteration, initialized, reset]);
+
+  if (!id || !iterationId) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl">
+        <p className="text-muted-foreground">Page not found.</p>
+        <Button variant="link" asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to My Bakery
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   async function onSubmit(data: IterationFormData) {
     setServerError(null);
@@ -272,9 +268,9 @@ export default function IterationEditPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="recipeContent">Recipe content</Label>
-              <textarea
+              <Textarea
                 id="recipeContent"
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[120px]"
                 {...register("recipeContent")}
                 placeholder="Ingredients, steps, etc."
                 disabled={isSubmitting}
@@ -402,9 +398,9 @@ export default function IterationEditPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optional)</Label>
-              <textarea
+              <Textarea
                 id="notes"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[80px]"
                 {...register("notes")}
                 placeholder="How did it turn out?"
                 disabled={isSubmitting}
