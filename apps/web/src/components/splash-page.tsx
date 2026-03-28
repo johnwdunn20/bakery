@@ -184,8 +184,8 @@ export function SplashPage() {
           </div>
 
           <div className="mt-16 text-center">
-            <Button variant="outline" size="lg" className="rounded-full px-8">
-              View All Community Bakes
+            <Button asChild variant="outline" size="lg" className="rounded-full px-8">
+              <Link href="/community">View All Community Bakes</Link>
             </Button>
           </div>
         </div>
@@ -283,14 +283,11 @@ export function SplashPage() {
             © 2026 Bakery App. The science of baking, simplified.
           </p>
           <div className="flex gap-6">
-            <Button variant="link" className="text-muted-foreground">
-              Terms
+            <Button asChild variant="link" className="text-muted-foreground">
+              <Link href="/terms">Terms</Link>
             </Button>
-            <Button variant="link" className="text-muted-foreground">
-              Privacy
-            </Button>
-            <Button variant="link" className="text-muted-foreground">
-              Contact
+            <Button asChild variant="link" className="text-muted-foreground">
+              <Link href="/privacy">Privacy</Link>
             </Button>
           </div>
         </div>

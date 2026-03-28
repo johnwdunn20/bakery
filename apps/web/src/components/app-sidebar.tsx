@@ -245,6 +245,17 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 px-3 pb-2 text-xs text-muted-foreground">
+          <Link href="/terms" className="hover:text-foreground transition-colors">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-foreground transition-colors">
+            Privacy
+          </Link>
+          <Link href="/community" className="hover:text-foreground transition-colors">
+            Community
+          </Link>
+        </div>
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

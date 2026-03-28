@@ -12,6 +12,11 @@ A professional-grade recipe management and experimentation platform for at-home 
   - **Live Baker's Math Demo:** Try out the scaling and percentage calculator before signing up.
   - **Community Showcase:** Preview the most "forked" and successful bakes.
 
+### Improvements
+
+- Contact Form
+- More links / SEO opportunities
+
 ### For Registered Bakers
 
 - **Post MVP**
