@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Community Bakes",
   description:
     "Explore recipes shared by the Bakery community. Discover bread, pastry, and dessert recipes from home bakers, and fork them to start your own experiments.",
+  alternates: {
+    canonical: "/community",
+  },
   openGraph: {
     title: "Community Bakes | Bakery",
     description:

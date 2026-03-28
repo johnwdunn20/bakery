@@ -4,6 +4,9 @@ export const metadata: Metadata = {
   title: "Terms of Service",
   description:
     "Terms of Service for Bakery, the professional-grade recipe management toolkit for home bakers. Read about our usage policies, intellectual property, and user responsibilities.",
+  alternates: {
+    canonical: "/terms",
+  },
   openGraph: {
     title: "Terms of Service | Bakery",
     description:

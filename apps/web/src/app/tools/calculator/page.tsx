@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Baker's Math Calculator",
   description:
     "Scale recipes instantly using baker's percentages. Adjust the flour amount and watch all other ingredients scale proportionally.",
+  alternates: {
+    canonical: "/tools/calculator",
+  },
   openGraph: {
     title: "Baker's Math Calculator | Bakery",
     description:

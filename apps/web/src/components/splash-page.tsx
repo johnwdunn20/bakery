@@ -1,19 +1,13 @@
-"use client";
-
-import { useQuery } from "convex/react";
-import { api } from "@bakery/backend";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { BakersMathCalculator } from "@/components/bakers-math-calculator";
 import { SubstitutionSearch } from "@/components/substitution-search";
-import { ChefHat, Microscope, Share2, Smartphone, ArrowRight, Star, LogIn } from "lucide-react";
-import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SplashAuthNav } from "@/components/splash-auth-nav";
+import { SplashHeroCTA } from "@/components/splash-hero-cta";
+import { SplashCommunityShowcase } from "@/components/splash-community-showcase";
+import { Microscope, Share2, Smartphone, Star } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SplashPage() {
-  const communityBakedGoods = useQuery(api.bakedGoods.listCommunityBakedGoods);
-
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
       {/* Header for splash page */}
@@ -25,25 +19,7 @@ export function SplashPage() {
             </div>
             <span className="hidden sm:inline">Bakery</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <ThemeToggle />
-            <SignedOut>
-              <SignInButton forceRedirectUrl="/">
-                <Button variant="outline" size="sm" className="sm:size-default">
-                  <LogIn className="h-4 w-4 mr-1.5" />
-                  Sign In
-                </Button>
-              </SignInButton>
-              <SignUpButton forceRedirectUrl="/">
-                <Button size="sm" className="sm:size-default">
-                  Get Started
-                </Button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </div>
+          <SplashAuthNav />
         </div>
       </header>
 
@@ -70,31 +46,7 @@ export function SplashPage() {
             with precision, and master the math behind every loaf.
           </p>
 
-          <div className="flex flex-col items-center gap-6 pt-4 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-500">
-            <Button
-              asChild
-              size="lg"
-              className="h-14 sm:h-16 px-8 sm:px-10 text-lg sm:text-xl rounded-full shadow-lg shadow-primary/20"
-            >
-              <Link href="/">
-                Go to My Bakery <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <div className="flex items-center gap-3">
-              <SignInButton forceRedirectUrl="/">
-                <Button variant="outline" className="rounded-full">
-                  <LogIn className="h-4 w-4 mr-1.5" />
-                  Sign In
-                </Button>
-              </SignInButton>
-              <span className="text-muted-foreground text-sm">or</span>
-              <SignUpButton forceRedirectUrl="/">
-                <Button variant="secondary" className="rounded-full">
-                  Create Account
-                </Button>
-              </SignUpButton>
-            </div>
-          </div>
+          <SplashHeroCTA />
         </div>
       </section>
 
@@ -144,50 +96,7 @@ export function SplashPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-            {communityBakedGoods?.map((bg) => (
-              <Card
-                key={bg._id}
-                className="overflow-hidden border-border group hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5"
-              >
-                <div className="h-48 sm:h-64 relative bg-muted overflow-hidden">
-                  <div className="w-full h-full flex items-center justify-center text-4xl">🍞</div>
-                </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl font-bold mb-1">{bg.name}</CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {bg.description ?? ""}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardFooter className="flex justify-between items-center border-t border-border pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">
-                      {bg.authorName.charAt(0)}
-                    </div>
-                    <span className="text-sm font-medium">{bg.authorName}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" className="group/btn">
-                    Fork{" "}
-                    <ChefHat className="ml-2 h-4 w-4 group-hover/btn:rotate-12 transition-transform" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-            {!communityBakedGoods &&
-              [1, 2, 3].map((i) => (
-                <div key={i} className="h-[400px] rounded-2xl bg-muted animate-pulse" />
-              ))}
-          </div>
-
-          <div className="mt-16 text-center">
-            <Button asChild variant="outline" size="lg" className="rounded-full px-8">
-              <Link href="/community">View All Community Bakes</Link>
-            </Button>
-          </div>
+          <SplashCommunityShowcase />
         </div>
       </section>
 
@@ -280,7 +189,7 @@ export function SplashPage() {
             Bakery
           </div>
           <p className="text-muted-foreground">
-            © 2026 Bakery App. The science of baking, simplified.
+            &copy; 2026 Bakery App. The science of baking, simplified.
           </p>
           <div className="flex gap-6">
             <Button asChild variant="link" className="text-muted-foreground">

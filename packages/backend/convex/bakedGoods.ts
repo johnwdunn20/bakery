@@ -776,6 +776,20 @@ export const listCommunityBakedGoods = query({
   },
 });
 
+export const getPublicBakedGood = query({
+  args: { id: v.id("bakedGoods") },
+  handler: async (ctx, args) => {
+    const bakedGood = await ctx.db.get(args.id);
+    if (!bakedGood || !bakedGood.isPublic) return null;
+
+    const author = await ctx.db.get(bakedGood.authorId);
+    return {
+      ...bakedGood,
+      authorName: author?.name ?? author?.username ?? "Unknown Baker",
+    };
+  },
+});
+
 export const publishBakedGood = mutation({
   args: {
     id: v.id("bakedGoods"),
