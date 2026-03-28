@@ -54,12 +54,53 @@ export const createBakedGoodForSeed = internalMutation({
     isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("bakedGoods")
+      .withIndex("by_author", (q) => q.eq("authorId", args.authorId))
+      .collect();
+    const match = existing.find((bg) => bg.name === args.name);
+    if (match) return match._id;
+
     const now = Date.now();
     return await ctx.db.insert("bakedGoods", {
       authorId: args.authorId,
       name: args.name,
       description: args.description,
       isPublic: args.isPublic,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const createIterationForSeed = internalMutation({
+  args: {
+    bakedGoodId: v.id("bakedGoods"),
+    recipeContent: v.string(),
+    difficulty: v.string(),
+    totalTime: v.number(),
+    bakeDate: v.number(),
+    rating: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    sourceUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("recipeIterations")
+      .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.bakedGoodId))
+      .collect();
+    if (existing.length > 0) return existing[0]._id;
+
+    const now = Date.now();
+    return await ctx.db.insert("recipeIterations", {
+      bakedGoodId: args.bakedGoodId,
+      recipeContent: args.recipeContent,
+      difficulty: args.difficulty,
+      totalTime: args.totalTime,
+      bakeDate: args.bakeDate,
+      rating: args.rating,
+      notes: args.notes,
+      sourceUrl: args.sourceUrl,
       createdAt: now,
       updatedAt: now,
     });
@@ -767,12 +808,139 @@ export const listCommunityBakedGoods = query({
     return await Promise.all(
       bakedGoods.map(async (bg) => {
         const author = await ctx.db.get(bg.authorId);
+
+        let coverPhotoUrl: string | null = null;
+        if (bg.coverPhotoStorageId) {
+          coverPhotoUrl = await ctx.storage.getUrl(bg.coverPhotoStorageId);
+        } else {
+          const latestIteration = await ctx.db
+            .query("recipeIterations")
+            .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", bg._id))
+            .order("desc")
+            .first();
+          if (latestIteration?.firstPhotoStorageId) {
+            coverPhotoUrl = await ctx.storage.getUrl(latestIteration.firstPhotoStorageId);
+          }
+        }
+
+        const iterations = await ctx.db
+          .query("recipeIterations")
+          .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", bg._id))
+          .collect();
+
         return {
           ...bg,
           authorName: author?.name ?? author?.username ?? "Unknown Baker",
+          coverPhotoUrl,
+          iterationCount: iterations.length,
         };
       })
     );
+  },
+});
+
+export const getCommunityBakedGoodWithIterations = query({
+  args: { id: v.id("bakedGoods") },
+  handler: async (ctx, args) => {
+    const bakedGood = await ctx.db.get(args.id);
+    if (!bakedGood || !bakedGood.isPublic) return null;
+
+    const author = await ctx.db.get(bakedGood.authorId);
+
+    const rawIterations = await ctx.db
+      .query("recipeIterations")
+      .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.id))
+      .collect();
+
+    const sortedIterations = rawIterations.sort((a, b) => b.bakeDate - a.bakeDate);
+
+    const iterations = await Promise.all(
+      sortedIterations.map(async (it) => {
+        const firstPhotoUrl = it.firstPhotoStorageId
+          ? await ctx.storage.getUrl(it.firstPhotoStorageId)
+          : null;
+        return {
+          _id: it._id,
+          recipeContent: it.recipeContent,
+          difficulty: it.difficulty,
+          totalTime: it.totalTime,
+          bakeDate: it.bakeDate,
+          rating: it.rating,
+          notes: it.notes,
+          firstPhotoUrl,
+        };
+      })
+    );
+
+    const ratings = iterations.map((i) => i.rating).filter((r): r is number => r != null);
+    const avgRating =
+      ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : null;
+    const bestRating = ratings.length > 0 ? Math.max(...ratings) : null;
+
+    let coverPhotoUrl: string | null = null;
+    if (bakedGood.coverPhotoStorageId) {
+      coverPhotoUrl = await ctx.storage.getUrl(bakedGood.coverPhotoStorageId);
+    }
+
+    return {
+      ...bakedGood,
+      authorName: author?.name ?? author?.username ?? "Unknown Baker",
+      iterations,
+      iterationCount: iterations.length,
+      avgRating,
+      bestRating,
+      coverPhotoUrl,
+    };
+  },
+});
+
+export const forkBakedGood = mutation({
+  args: { id: v.id("bakedGoods") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const source = await ctx.db.get(args.id);
+    if (!source || !source.isPublic) {
+      throw new Error("Baked good not found or not public");
+    }
+
+    const now = Date.now();
+    const newBakedGoodId = await ctx.db.insert("bakedGoods", {
+      authorId: user._id,
+      name: source.name,
+      description: source.description,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const iterations = await ctx.db
+      .query("recipeIterations")
+      .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", args.id))
+      .collect();
+
+    for (const it of iterations) {
+      await ctx.db.insert("recipeIterations", {
+        bakedGoodId: newBakedGoodId,
+        recipeContent: it.recipeContent,
+        difficulty: it.difficulty,
+        totalTime: it.totalTime,
+        bakeDate: it.bakeDate,
+        rating: it.rating,
+        notes: it.notes,
+        sourceUrl: it.sourceUrl,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    return newBakedGoodId;
   },
 });
 
