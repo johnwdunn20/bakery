@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -121,6 +121,11 @@ export default function IterationEditPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
+  const nextOrderRef = useRef(0);
+
+  useEffect(() => {
+    nextOrderRef.current = iteration?.photos?.length ?? 0;
+  }, [iteration?.photos?.length]);
 
   useEffect(() => {
     if (iteration && !initialized) {
@@ -174,7 +179,6 @@ export default function IterationEditPage() {
   async function handleFilesSelected(files: FileList) {
     setUploadError(null);
     setIsUploading(true);
-    const photoCount = iteration?.photos?.length ?? 0;
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -183,10 +187,12 @@ export default function IterationEditPage() {
         const response = await fetch(uploadUrl, { method: "POST", body: file });
         if (!response.ok) throw new Error("Upload failed");
         const { storageId } = (await response.json()) as { storageId: string };
+        const order = nextOrderRef.current;
+        nextOrderRef.current++;
         await addIterationPhoto({
           iterationId: iterationId as Id<"recipeIterations">,
           storageId: storageId as Id<"_storage">,
-          order: photoCount + i,
+          order,
         });
       }
     } catch (err) {

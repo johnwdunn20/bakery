@@ -153,6 +153,7 @@ export default function NewIterationPage() {
         sourceUrl: data.sourceUrl?.trim() || undefined,
       });
       if (selectedFiles.length > 0) {
+        let hasUploadError = false;
         for (let i = 0; i < selectedFiles.length; i++) {
           setSelectedFiles((prev) =>
             prev.map((f, idx) => (idx === i ? { ...f, status: "uploading" as UploadStatus } : f))
@@ -172,10 +173,15 @@ export default function NewIterationPage() {
               prev.map((f, idx) => (idx === i ? { ...f, status: "done" as UploadStatus } : f))
             );
           } catch {
+            hasUploadError = true;
             setSelectedFiles((prev) =>
               prev.map((f, idx) => (idx === i ? { ...f, status: "error" as UploadStatus } : f))
             );
           }
+        }
+        if (hasUploadError) {
+          setServerError("Some photos failed to upload. You can retry or continue without them.");
+          return;
         }
       }
       selectedFiles.forEach((sf) => URL.revokeObjectURL(sf.previewUrl));

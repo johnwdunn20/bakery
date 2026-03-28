@@ -110,15 +110,15 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/baked-goods/[id]/page.tsx`
       Errors are written to `updateError` which only renders inside the edit Sheet. Delete errors need their own state and display location.
 
-- [ ] **Stale `photoCount` closure in edit page photo upload**
+- [x] **Stale `photoCount` closure in edit page photo upload**
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       Multiple rapid uploads read a stale `photoCount` before Convex reflects the new count, potentially creating duplicate `order` values. Use a ref or re-fetch count inside the handler.
 
-- [ ] **No error handling for photo deletion**
+- [x] **No error handling for photo deletion**
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx`
       If `deleteIterationPhoto` throws, the dialog closes silently. Show a toast or error message on failure.
 
-- [ ] **Silent photo upload failure on new iteration form**
+- [x] **Silent photo upload failure on new iteration form**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       If a photo upload fails inside `handleSubmit`, the `catch` block marks the file as `"error"` but execution continues and `router.push(...)` is called immediately. The user is redirected away before seeing that their photo failed. Block navigation and surface the error instead.
 

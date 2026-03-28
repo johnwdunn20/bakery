@@ -72,6 +72,7 @@ export default function IterationViewPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
+  const [deletePhotoError, setDeletePhotoError] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const iteration = useQuery(
@@ -370,8 +371,13 @@ export default function IterationViewPage() {
               onClick={async () => {
                 if (!photoToDelete) return;
                 setDeletingPhotoId(photoToDelete);
+                setDeletePhotoError(null);
                 try {
                   await deleteIterationPhoto({ id: photoToDelete });
+                } catch (err) {
+                  setDeletePhotoError(
+                    err instanceof Error ? err.message : "Failed to delete photo."
+                  );
                 } finally {
                   setDeletingPhotoId(null);
                   setPhotoToDelete(null);
@@ -383,6 +389,8 @@ export default function IterationViewPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {deletePhotoError && <p className="text-sm text-destructive">{deletePhotoError}</p>}
 
       {iteration.notes && iteration.notes.trim() && (
         <Card>
