@@ -22,7 +22,12 @@ export default defineSchema({
     coverPhotoStorageId: v.optional(v.id("_storage")),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_author", ["authorId"]),
+  })
+    .index("by_author", ["authorId"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["authorId"],
+    }),
 
   recipeIterations: defineTable({
     bakedGoodId: v.id("bakedGoods"),

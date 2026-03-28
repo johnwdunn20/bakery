@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 
@@ -175,6 +176,51 @@ export const listMyBakedGoods = query({
         };
       })
     );
+  },
+});
+
+export const listMyBakedGoodsPaginated = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { paginationOpts }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { page: [], isDone: true, continueCursor: "" };
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) return { page: [], isDone: true, continueCursor: "" };
+
+    const results = await ctx.db
+      .query("bakedGoods")
+      .withIndex("by_author", (q) => q.eq("authorId", user._id))
+      .paginate(paginationOpts);
+
+    return {
+      ...results,
+      page: results.page.map((bg) => ({ _id: bg._id, name: bg.name })),
+    };
+  },
+});
+
+export const searchMyBakedGoods = query({
+  args: { query: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) return [];
+
+    const results = await ctx.db
+      .query("bakedGoods")
+      .withSearchIndex("search_name", (q) => q.search("name", args.query).eq("authorId", user._id))
+      .take(50);
+
+    return results.map((bg) => ({ _id: bg._id, name: bg.name }));
   },
 });
 

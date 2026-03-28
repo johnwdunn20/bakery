@@ -197,11 +197,11 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/components/dashboard.tsx`
       The hover color on the "Add new" icon circle never triggers because no ancestor has the `group` Tailwind class.
 
-- [ ] **No unsaved changes warning on edit/new forms**
+- [x] **No unsaved changes warning on edit/new forms**
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/edit/page.tsx`
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       Navigating away loses all progress with no confirmation prompt.
 
-- [ ] **Sidebar baked goods list has no pagination**
+- [x] **Sidebar baked goods list has no pagination**
       `apps/web/src/components/app-sidebar.tsx`
       All baked goods render simultaneously. With 100+ items the list becomes unwieldy. Add pagination or a search/filter.

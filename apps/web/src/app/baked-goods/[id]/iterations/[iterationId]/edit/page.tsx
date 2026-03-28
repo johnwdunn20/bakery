@@ -55,6 +55,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, CalendarIcon, Trash2, X, Loader2 } from "lucide-react";
 import { TIME_PRESETS } from "@bakery/shared/constants";
+import { useUnsavedChangesWarning } from "@/hooks";
 import { formatDate, formatMinutes, formatDateForInput } from "@/lib/format";
 
 type IterationFormData = z.infer<typeof iterationSchema>;
@@ -106,10 +107,12 @@ export default function IterationEditPage() {
     setValue,
     watch,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<IterationFormData>({
     resolver: zodResolver(iterationSchema) as Resolver<IterationFormData>,
   });
+
+  useUnsavedChangesWarning(isDirty);
 
   const bakeDate = watch("bakeDate");
   const [initialized, setInitialized] = useState(false);

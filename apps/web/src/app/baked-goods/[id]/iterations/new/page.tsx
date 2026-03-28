@@ -44,6 +44,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { X, Check, Loader2, AlertCircle, CalendarIcon } from "lucide-react";
 import { TIME_PRESETS } from "@bakery/shared/constants";
+import { useUnsavedChangesWarning } from "@/hooks";
 import { formatMinutes } from "@/lib/format";
 
 type UploadStatus = "pending" | "uploading" | "done" | "error";
@@ -74,7 +75,7 @@ export default function NewIterationPage() {
     control,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<IterationFormData>({
     resolver: zodResolver(iterationSchema) as Resolver<IterationFormData>,
     defaultValues: {
@@ -91,6 +92,8 @@ export default function NewIterationPage() {
   const bakeDate = watch("bakeDate");
   const [serverError, setServerError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+
+  useUnsavedChangesWarning(isDirty || selectedFiles.length > 0);
   const selectedFilesRef = useRef(selectedFiles);
   selectedFilesRef.current = selectedFiles;
 
