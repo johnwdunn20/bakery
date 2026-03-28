@@ -406,7 +406,7 @@ describe("bakedGoods.getBakedGoodWithIterations", () => {
 // --- listCommunityBakedGoods ---
 
 describe("bakedGoods.listCommunityBakedGoods", () => {
-  it("returns baked goods without authentication", async () => {
+  it("returns only public baked goods without authentication", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -422,6 +422,7 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
       await ctx.db.insert("bakedGoods", {
         authorId: userId,
         name: "Community Bread",
+        isPublic: true,
         createdAt: now,
         updatedAt: now,
       });
@@ -430,6 +431,45 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
     const result = await t.query(api.bakedGoods.listCommunityBakedGoods);
     expect(result).toHaveLength(1);
     expect(result[0].authorName).toBe("Community Baker");
+  });
+
+  it("excludes non-public baked goods", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "private@test.com",
+        username: "privateBaker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Private Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Also Private",
+        isPublic: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Public Bread",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Public Bread");
   });
 
   it("limits to 12 results", async () => {
@@ -448,6 +488,7 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
         await ctx.db.insert("bakedGoods", {
           authorId: userId,
           name: `Bread ${i}`,
+          isPublic: true,
           createdAt: now,
           updatedAt: now,
         });
@@ -456,6 +497,85 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
 
     const result = await t.query(api.bakedGoods.listCommunityBakedGoods);
     expect(result).toHaveLength(12);
+  });
+});
+
+// --- publishBakedGood ---
+
+describe("bakedGoods.publishBakedGood", () => {
+  it("throws when not authenticated", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    await expect(
+      t.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: true })
+    ).rejects.toThrow("Not authenticated");
+  });
+
+  it("throws when publishing another user's baked good", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    await seedUser(t, "clerk_2", "baker2");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "User1 Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser2 = t.withIdentity(identity("clerk_2", "baker2"));
+    await expect(
+      asUser2.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: true })
+    ).rejects.toThrow("not owned by you");
+  });
+
+  it("publishes and unpublishes a baked good", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Toggle Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+
+    // Initially not public — should not appear in community
+    let community = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(community).toHaveLength(0);
+
+    // Publish
+    await asUser.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: true });
+    community = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(community).toHaveLength(1);
+    expect(community[0].name).toBe("Toggle Bread");
+
+    // Unpublish
+    await asUser.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: false });
+    community = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(community).toHaveLength(0);
   });
 });
 

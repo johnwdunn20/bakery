@@ -51,6 +51,7 @@ export const createBakedGoodForSeed = internalMutation({
     authorId: v.id("users"),
     name: v.string(),
     description: v.optional(v.string()),
+    isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -58,6 +59,7 @@ export const createBakedGoodForSeed = internalMutation({
       authorId: args.authorId,
       name: args.name,
       description: args.description,
+      isPublic: args.isPublic,
       createdAt: now,
       updatedAt: now,
     });

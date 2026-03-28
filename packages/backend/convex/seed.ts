@@ -53,6 +53,7 @@ export const run = action({
         authorId,
         name: bg.name,
         description: bg.description,
+        isPublic: true,
       });
     }
 

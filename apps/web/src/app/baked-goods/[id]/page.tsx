@@ -52,6 +52,8 @@ import {
   CalendarClock,
   Camera,
   Copy,
+  Globe,
+  GlobeLock,
   Image,
   List,
   Loader2,
@@ -217,6 +219,20 @@ export default function BakedGoodDetailPage() {
       }
     }
   );
+  const publishBakedGood = useMutation(api.bakedGoods.publishBakedGood).withOptimisticUpdate(
+    (localStore, args) => {
+      const current = localStore.getQuery(api.bakedGoods.getBakedGoodWithIterations, {
+        id: args.id,
+      });
+      if (current) {
+        localStore.setQuery(
+          api.bakedGoods.getBakedGoodWithIterations,
+          { id: args.id },
+          { ...current, isPublic: args.isPublic }
+        );
+      }
+    }
+  );
   const [duplicatingId, setDuplicatingId] = useState<Id<"recipeIterations"> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
@@ -350,90 +366,115 @@ export default function BakedGoodDetailPage() {
             {lastBakedDate != null && <> · Last baked {formatDate(lastBakedDate)}</>}
           </p>
         </div>
-        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Edit baked good">
-              <Pencil className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Edit Baked Good</SheetTitle>
-              <SheetDescription>
-                Update the name and description of this baked good.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
-                <Input
-                  id="edit-name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="e.g. Sourdough Bread"
-                  disabled={isUpdating || isDeleting}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Description (optional)</Label>
-                <Textarea
-                  id="edit-description"
-                  className="min-h-[80px]"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="A brief description..."
-                  disabled={isUpdating || isDeleting}
-                />
-              </div>
-              {updateError && <p className="text-sm text-destructive">{updateError}</p>}
-            </div>
-            <SheetFooter className="flex-col gap-2 sm:flex-col">
-              <Button
-                onClick={handleUpdateBakedGood}
-                disabled={isUpdating || isDeleting}
-                className="w-full"
-              >
-                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isUpdating ? "Saving..." : "Save changes"}
+        <div className="flex items-center gap-1">
+          <Button
+            variant={bakedGood.isPublic ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() =>
+              publishBakedGood({
+                id: id as Id<"bakedGoods">,
+                isPublic: !bakedGood.isPublic,
+              })
+            }
+            aria-label={bakedGood.isPublic ? "Unpublish from community" : "Share to community"}
+          >
+            {bakedGood.isPublic ? (
+              <>
+                <Globe className="mr-1.5 h-4 w-4" />
+                Published
+              </>
+            ) : (
+              <>
+                <GlobeLock className="mr-1.5 h-4 w-4" />
+                Share
+              </>
+            )}
+          </Button>
+          <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Edit baked good">
+                <Pencil className="h-4 w-4" />
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Edit Baked Good</SheetTitle>
+                <SheetDescription>
+                  Update the name and description of this baked good.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="e.g. Sourdough Bread"
                     disabled={isUpdating || isDeleting}
-                    className="w-full"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="mr-2 h-4 w-4" />
-                    )}
-                    {isDeleting ? "Deleting..." : "Delete Baked Good"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this baked good?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete &quot;{bakedGood.name}&quot; and all{" "}
-                      {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}. This
-                      action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={handleDeleteBakedGood}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Description (optional)</Label>
+                  <Textarea
+                    id="edit-description"
+                    className="min-h-[80px]"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="A brief description..."
+                    disabled={isUpdating || isDeleting}
+                  />
+                </div>
+                {updateError && <p className="text-sm text-destructive">{updateError}</p>}
+              </div>
+              <SheetFooter className="flex-col gap-2 sm:flex-col">
+                <Button
+                  onClick={handleUpdateBakedGood}
+                  disabled={isUpdating || isDeleting}
+                  className="w-full"
+                >
+                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isUpdating ? "Saving..." : "Save changes"}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      disabled={isUpdating || isDeleting}
+                      className="w-full"
                     >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+                      {isDeleting ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-2 h-4 w-4" />
+                      )}
+                      {isDeleting ? "Deleting..." : "Delete Baked Good"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this baked good?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete &quot;{bakedGood.name}&quot; and all{" "}
+                        {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}. This
+                        action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={handleDeleteBakedGood}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
