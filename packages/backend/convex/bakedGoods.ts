@@ -756,7 +756,11 @@ export const duplicateIteration = mutation({
 export const listCommunityBakedGoods = query({
   args: {},
   handler: async (ctx) => {
-    const bakedGoods = await ctx.db.query("bakedGoods").order("desc").take(12);
+    const bakedGoods = await ctx.db
+      .query("bakedGoods")
+      .withIndex("by_public", (q) => q.eq("isPublic", true))
+      .order("desc")
+      .take(12);
 
     return await Promise.all(
       bakedGoods.map(async (bg) => {
@@ -767,5 +771,33 @@ export const listCommunityBakedGoods = query({
         };
       })
     );
+  },
+});
+
+export const publishBakedGood = mutation({
+  args: {
+    id: v.id("bakedGoods"),
+    isPublic: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const bakedGood = await ctx.db.get(args.id);
+    if (!bakedGood || bakedGood.authorId !== user._id) {
+      throw new Error("Baked good not found or not owned by you");
+    }
+
+    await ctx.db.patch(args.id, {
+      isPublic: args.isPublic,
+      updatedAt: Date.now(),
+    });
+    return args.id;
   },
 });

@@ -20,10 +20,12 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     coverPhotoStorageId: v.optional(v.id("_storage")),
+    isPublic: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_author", ["authorId"])
+    .index("by_public", ["isPublic"])
     .searchIndex("search_name", {
       searchField: "name",
       filterFields: ["authorId"],
