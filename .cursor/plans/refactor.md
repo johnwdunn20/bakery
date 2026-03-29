@@ -34,7 +34,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/(info)/layout.tsx`
       `ChefHat` is imported from `lucide-react` but never used — dead import.
 
-- [ ] **Retrying new iteration after photo upload failure can create duplicate iterations**
+- [x] **Retrying new iteration after photo upload failure can create duplicate iterations**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
       `createIteration` runs before photo uploads. If any upload fails, the form stays on page and retrying submit creates another iteration record. Move iteration creation after successful uploads, or add a retry flow that reuses the created iteration.
 

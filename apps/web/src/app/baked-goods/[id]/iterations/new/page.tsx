@@ -92,6 +92,7 @@ export default function NewIterationPage() {
   const bakeDate = watch("bakeDate");
   const [serverError, setServerError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const createdIterationIdRef = useRef<Id<"recipeIterations"> | null>(null);
 
   useUnsavedChangesWarning(isDirty || selectedFiles.length > 0);
   const selectedFilesRef = useRef(selectedFiles);
@@ -142,19 +143,24 @@ export default function NewIterationPage() {
     setServerError(null);
     const bakeDateTs = new Date(data.bakeDate + "T12:00:00").getTime();
     try {
-      const newId = await createIteration({
-        bakedGoodId: bakedGoodId as Id<"bakedGoods">,
-        recipeContent: data.recipeContent.trim(),
-        difficulty: data.difficulty,
-        totalTime: data.totalTime,
-        bakeDate: bakeDateTs,
-        rating: data.rating,
-        notes: data.notes?.trim() || undefined,
-        sourceUrl: data.sourceUrl?.trim() || undefined,
-      });
+      let newId = createdIterationIdRef.current;
+      if (!newId) {
+        newId = await createIteration({
+          bakedGoodId: bakedGoodId as Id<"bakedGoods">,
+          recipeContent: data.recipeContent.trim(),
+          difficulty: data.difficulty,
+          totalTime: data.totalTime,
+          bakeDate: bakeDateTs,
+          rating: data.rating,
+          notes: data.notes?.trim() || undefined,
+          sourceUrl: data.sourceUrl?.trim() || undefined,
+        });
+        createdIterationIdRef.current = newId;
+      }
       if (selectedFiles.length > 0) {
         let hasUploadError = false;
         for (let i = 0; i < selectedFiles.length; i++) {
+          if (selectedFiles[i].status === "done") continue;
           setSelectedFiles((prev) =>
             prev.map((f, idx) => (idx === i ? { ...f, status: "uploading" as UploadStatus } : f))
           );
