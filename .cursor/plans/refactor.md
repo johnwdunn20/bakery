@@ -26,7 +26,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `packages/backend/convex/bakedGoods.ts`
       When a baked good has no `coverPhotoStorageId`, the query fetches the "latest" iteration via `.order("desc").first()` on the `by_baked_good` index, which orders by Convex internal document ID (insertion order), not `bakeDate`. Elsewhere (e.g. `listMyBakedGoods`, `getCommunityBakedGoodWithIterations`), iterations are sorted by `bakeDate`. The community grid thumbnail may show a photo from the wrong iteration.
 
-- [ ] **`forkBakedGood` copies iterations without photos or `firstPhotoStorageId`**
+- [x] **`forkBakedGood` copies iterations without photos or `firstPhotoStorageId`**
       `packages/backend/convex/bakedGoods.ts`
       Forked iterations omit `firstPhotoStorageId` and don't copy `iterationPhotos` rows or storage blobs. The forked baked good will have no cover photo and no iteration thumbnails, even if the source had them. This may be intentional (storage cost), but should be documented or the user should be told photos won't be copied.
 
