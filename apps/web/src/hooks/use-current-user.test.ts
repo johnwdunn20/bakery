@@ -70,4 +70,24 @@ describe("useCurrentUser", () => {
 
     expect(mockSyncUser).toHaveBeenCalledOnce();
   });
+
+  it("re-triggers syncUser after sign-out and sign-in", () => {
+    mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: true } as never);
+    mockUseQuery.mockReturnValue(null);
+
+    const { rerender } = renderHook(() => useCurrentUser());
+    expect(mockSyncUser).toHaveBeenCalledOnce();
+
+    mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: false } as never);
+    mockUseQuery.mockReturnValue(undefined);
+    rerender();
+
+    mockSyncUser.mockClear();
+
+    mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: true } as never);
+    mockUseQuery.mockReturnValue(null);
+    rerender();
+
+    expect(mockSyncUser).toHaveBeenCalledOnce();
+  });
 });

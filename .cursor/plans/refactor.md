@@ -14,7 +14,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/components/public-baked-good-detail.tsx`
       This component is never imported anywhere. Its "Fork Recipe" button has no `onClick` handler — clicking it does nothing. Either wire it into a route or delete it. The community detail page uses `CommunityBakedGoodDetail` instead, making this file orphaned.
 
-- [ ] **`useCurrentUser` `hasSynced` ref is never reset on sign-out**
+- [x] **`useCurrentUser` `hasSynced` ref is never reset on sign-out**
       `apps/web/src/hooks/use-current-user.ts`
       If user A signs in, `hasSynced.current` becomes `true`. If A signs out and user B signs in, `hasSynced` is still `true`, so `syncUser()` never runs for B. The Convex user record for B may never be created. Reset the ref when `isSignedIn` transitions to `false`.
 
