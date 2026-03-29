@@ -776,4 +776,92 @@ describe("bakedGoods.forkBakedGood", () => {
     expect(forked!.iterations).toHaveLength(1);
     expect(forked!.iterations[0].recipeContent).toBe("Original recipe content");
   });
+
+  it("copies photo references when forking", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    await seedUser(t, "clerk_2", "baker2");
+
+    let bgId!: Id<"bakedGoods">;
+    let sourceIterationId!: Id<"recipeIterations">;
+    let coverStorageId!: Id<"_storage">;
+    let photoStorageId1!: Id<"_storage">;
+    let photoStorageId2!: Id<"_storage">;
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      coverStorageId = (await ctx.storage.store(new Blob(["cover"]))) as Id<"_storage">;
+      photoStorageId1 = (await ctx.storage.store(new Blob(["photo1"]))) as Id<"_storage">;
+      photoStorageId2 = (await ctx.storage.store(new Blob(["photo2"]))) as Id<"_storage">;
+
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "Photo Bread",
+        isPublic: true,
+        coverPhotoStorageId: coverStorageId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      sourceIterationId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe with photos",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        firstPhotoStorageId: photoStorageId1,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("iterationPhotos", {
+        iterationId: sourceIterationId,
+        storageId: photoStorageId1,
+        order: 0,
+        createdAt: now,
+      });
+      await ctx.db.insert("iterationPhotos", {
+        iterationId: sourceIterationId,
+        storageId: photoStorageId2,
+        order: 1,
+        createdAt: now,
+      });
+    });
+
+    const asUser2 = t.withIdentity(identity("clerk_2", "baker2"));
+    const forkedId = await asUser2.mutation(api.bakedGoods.forkBakedGood, { id: bgId });
+
+    await t.run(async (ctx) => {
+      const forkedBg = await ctx.db.get(forkedId);
+      expect(forkedBg).not.toBeNull();
+      expect(forkedBg!.coverPhotoStorageId).toEqual(coverStorageId);
+
+      const forkedIterations = await ctx.db
+        .query("recipeIterations")
+        .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", forkedId))
+        .collect();
+      expect(forkedIterations).toHaveLength(1);
+      expect(forkedIterations[0].firstPhotoStorageId).toEqual(photoStorageId1);
+
+      const forkedPhotos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", forkedIterations[0]._id))
+        .collect();
+      expect(forkedPhotos).toHaveLength(2);
+      forkedPhotos.sort((a, b) => a.order - b.order);
+      expect(forkedPhotos[0].storageId).toEqual(photoStorageId1);
+      expect(forkedPhotos[0].order).toBe(0);
+      expect(forkedPhotos[1].storageId).toEqual(photoStorageId2);
+      expect(forkedPhotos[1].order).toBe(1);
+
+      // Forked photos should reference different iterationPhotos rows than the source
+      const sourcePhotos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", sourceIterationId))
+        .collect();
+      expect(sourcePhotos).toHaveLength(2);
+      const sourcePhotoIds = new Set(sourcePhotos.map((p) => p._id));
+      for (const fp of forkedPhotos) {
+        expect(sourcePhotoIds.has(fp._id)).toBe(false);
+      }
+    });
+  });
 });

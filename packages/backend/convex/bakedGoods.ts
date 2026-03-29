@@ -916,6 +916,7 @@ export const forkBakedGood = mutation({
       authorId: user._id,
       name: source.name,
       description: source.description,
+      coverPhotoStorageId: source.coverPhotoStorageId,
       createdAt: now,
       updatedAt: now,
     });
@@ -926,7 +927,7 @@ export const forkBakedGood = mutation({
       .collect();
 
     for (const it of iterations) {
-      await ctx.db.insert("recipeIterations", {
+      const newIterationId = await ctx.db.insert("recipeIterations", {
         bakedGoodId: newBakedGoodId,
         recipeContent: it.recipeContent,
         difficulty: it.difficulty,
@@ -935,9 +936,24 @@ export const forkBakedGood = mutation({
         rating: it.rating,
         notes: it.notes,
         sourceUrl: it.sourceUrl,
+        firstPhotoStorageId: it.firstPhotoStorageId,
         createdAt: now,
         updatedAt: now,
       });
+
+      const photos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", it._id))
+        .collect();
+
+      for (const photo of photos) {
+        await ctx.db.insert("iterationPhotos", {
+          iterationId: newIterationId,
+          storageId: photo.storageId,
+          order: photo.order,
+          createdAt: now,
+        });
+      }
     }
 
     return newBakedGoodId;
