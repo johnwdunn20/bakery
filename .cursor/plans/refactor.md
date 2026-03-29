@@ -18,7 +18,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/hooks/use-current-user.ts`
       If user A signs in, `hasSynced.current` becomes `true`. If A signs out and user B signs in, `hasSynced` is still `true`, so `syncUser()` never runs for B. The Convex user record for B may never be created. Reset the ref when `isSignedIn` transitions to `false`.
 
-- [ ] **`useUnsavedChangesWarning` monkey-patches `history.pushState`/`replaceState` globally**
+- [x] **`useUnsavedChangesWarning` monkey-patches `history.pushState`/`replaceState` globally**
       `apps/web/src/hooks/use-unsaved-changes-warning.ts`
       The hook globally overrides `history.pushState` and `history.replaceState` in its effect. If multiple forms mount simultaneously, the patches stack and are restored incorrectly on unmount (LIFO vs actual teardown order). More critically, this interacts poorly with Next.js App Router's internal use of the History API — potential for double prompts, swallowed navigations, or infinite loops. Consider a router-aware approach (e.g. `router.events` / `onBeforeRouteChange`) or a context-based solution instead.
 
@@ -33,10 +33,6 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 - [ ] **Unused `ChefHat` import in info layout**
       `apps/web/src/app/(info)/layout.tsx`
       `ChefHat` is imported from `lucide-react` but never used — dead import.
-
-- [ ] **Splash hero CTA has redundant sign-in buttons for signed-out users**
-      `apps/web/src/components/splash-hero-cta.tsx`
-      When signed out, users see both a large "Go to My Bakery" `SignInButton` _and_ a separate "Sign In" / "Create Account" row — three sign-in triggers at once. The "Go to My Bakery" label is misleading for unauthenticated users (it triggers sign-in, not navigation). Simplify to one clear CTA for signed-out state.
 
 - [ ] **Retrying new iteration after photo upload failure can create duplicate iterations**
       `apps/web/src/app/baked-goods/[id]/iterations/new/page.tsx`
