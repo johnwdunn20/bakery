@@ -42,7 +42,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 
 ## Medium (Logic Bugs, UX)
 
-- [ ] **Markdown rendering lacks explicit sanitization hardening**
+- [x] **Markdown rendering lacks explicit sanitization hardening**
       `apps/web/src/app/baked-goods/[id]/iterations/[iterationId]/page.tsx`
       `apps/web/src/components/community-baked-good-detail.tsx`
       Current `react-markdown` usage is generally safe without `rehype-raw`, but add an explicit sanitization policy as defense-in-depth (especially before any future raw HTML support).

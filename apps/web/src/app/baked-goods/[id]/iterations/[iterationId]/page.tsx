@@ -7,9 +7,7 @@ import type { Id } from "@bakery/backend/dataModel";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import ReactMarkdown from "react-markdown";
-import type { Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,26 +34,6 @@ import { ArrowLeft, Copy, Loader2, Pencil, Star, Trash2, X } from "lucide-react"
 import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 import { PhotoGrid } from "@/components/ui/photo-dropzone";
 import { formatDate, formatMinutes } from "@/lib/format";
-
-const markdownComponents: Components = {
-  h1: ({ children }) => <h1 className="mt-6 mb-3 text-2xl font-bold first:mt-0">{children}</h1>,
-  h2: ({ children }) => <h2 className="mt-5 mb-2 text-xl font-bold">{children}</h2>,
-  h3: ({ children }) => <h3 className="mt-4 mb-2 text-lg font-semibold">{children}</h3>,
-  p: ({ children }) => <p className="mb-3 leading-relaxed last:mb-0">{children}</p>,
-  ul: ({ children }) => <ul className="mb-3 list-disc pl-6 space-y-1">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-3 list-decimal pl-6 space-y-1">{children}</ol>,
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-  code: ({ className, children, ...props }) => (
-    <code className={className ?? "rounded bg-muted px-1.5 py-0.5 font-mono text-sm"} {...props}>
-      {children}
-    </code>
-  ),
-  blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-muted-foreground/30 pl-4 italic text-muted-foreground">
-      {children}
-    </blockquote>
-  ),
-};
 
 export default function IterationViewPage() {
   const params = useParams();
@@ -409,9 +387,7 @@ export default function IterationViewPage() {
         </CardHeader>
         <CardContent>
           <div className="prose-recipe min-w-0">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {iteration.recipeContent}
-            </ReactMarkdown>
+            <MarkdownContent>{iteration.recipeContent}</MarkdownContent>
           </div>
         </CardContent>
       </Card>
