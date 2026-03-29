@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ChefHat } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 

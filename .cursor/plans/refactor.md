@@ -30,7 +30,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `packages/backend/convex/bakedGoods.ts`
       Forked iterations omit `firstPhotoStorageId` and don't copy `iterationPhotos` rows or storage blobs. The forked baked good will have no cover photo and no iteration thumbnails, even if the source had them. This may be intentional (storage cost), but should be documented or the user should be told photos won't be copied.
 
-- [ ] **Unused `ChefHat` import in info layout**
+- [x] **Unused `ChefHat` import in info layout**
       `apps/web/src/app/(info)/layout.tsx`
       `ChefHat` is imported from `lucide-react` but never used — dead import.
 
