@@ -6,7 +6,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
 
 ## New Regressions Introduced in This Branch
 
-- [ ] **`IterationCard` uses raw `<img>` instead of `next/image`**
+- [x] **`IterationCard` uses raw `<img>` instead of `next/image`**
       `apps/web/src/app/baked-goods/[id]/page.tsx` (line 93)
       The branch moved `IterationCard` to module scope (good), but the thumbnail still uses a raw `<img>` tag. This was already flagged as an issue — the fix was applied elsewhere (community detail, cover photos) but missed here. The new iteration page photo preview (`iterations/new/page.tsx` line 408) has the same issue.
 

@@ -6,6 +6,7 @@ import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -54,7 +55,7 @@ import {
   Copy,
   Globe,
   GlobeLock,
-  Image,
+  Image as ImageIcon,
   List,
   Loader2,
   Pencil,
@@ -88,15 +89,17 @@ function IterationCard({ it, bakedGoodId, duplicatingId, onDuplicate }: Iteratio
   return (
     <Card className="border bg-card transition-colors hover:bg-accent/50">
       <CardContent className="p-4 flex items-start gap-3">
-        <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+        <div className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
           {it.firstPhotoUrl ? (
-            <img
+            <Image
               src={it.firstPhotoUrl}
               alt={`Photo from ${formatDate(it.bakeDate)} bake`}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="80px"
             />
           ) : (
-            <Image className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+            <ImageIcon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
           )}
         </div>
         <Link
@@ -448,19 +451,21 @@ export default function BakedGoodDetailPage() {
       {hasIterations && (
         <>
           <div className="flex items-center gap-4">
-            <div className="shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+            <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
               {bakedGood.coverPhotoUrl ||
               sortedIterations.find((it) => it.firstPhotoUrl)?.firstPhotoUrl ? (
-                <img
+                <Image
                   src={
                     bakedGood.coverPhotoUrl ||
                     sortedIterations.find((it) => it.firstPhotoUrl)!.firstPhotoUrl!
                   }
                   alt={`Cover photo of ${bakedGood.name}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="96px"
                 />
               ) : (
-                <Image className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                <ImageIcon className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
               )}
             </div>
             <Button variant="outline" size="sm" onClick={() => setIsCoverPickerOpen(true)}>
