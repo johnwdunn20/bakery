@@ -59,7 +59,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/components/splash-community-showcase.tsx`
       The empty state message now exists, but "View All Community Bakes" still renders when the list is empty. Hide that CTA unless `communityBakedGoods.length > 0`.
 
-- [ ] **Community detail page has no per-page metadata / OG tags**
+- [x] **Community detail page has no per-page metadata / OG tags**
       `apps/web/src/app/(info)/community/[id]/page.tsx`
       No `generateMetadata` export — every community recipe shares the same generic title/description. For SEO and link previews, generate metadata from the baked good name/description.
 
