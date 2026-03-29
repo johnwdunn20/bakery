@@ -128,8 +128,9 @@ export function SplashPage() {
               Focus on the Dough, Not the Screen.
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-primary-foreground/80 leading-relaxed">
-              Our signature **Bake Mode** is designed for the flour-covered hands. High-contrast,
-              interactive steps, and a screen that never sleeps while you&apos;re working.
+              Our signature <strong>Bake Mode</strong> is designed for the flour-covered hands.
+              High-contrast, interactive steps, and a screen that never sleeps while you&apos;re
+              working.
             </p>
             <ul className="space-y-4">
               {["Built-in timers", "Interactive step tracking", "Recipe scaling on the fly"].map(
@@ -146,7 +147,7 @@ export function SplashPage() {
             <SplashSignInButton variant="secondary" className="h-14 px-8 text-lg rounded-full" />
           </div>
           <div className="relative hidden sm:block">
-            <div className="bg-background rounded-[40px] border-8 border-primary-foreground/10 p-4 shadow-2xl overflow-hidden aspect-9/16 max-w-[280px] sm:max-w-[320px] mx-auto transform lg:rotate-6">
+            <div className="bg-background rounded-[40px] border-8 border-primary-foreground/10 p-4 shadow-2xl overflow-hidden aspect-[9/16] max-w-[280px] sm:max-w-[320px] mx-auto transform lg:rotate-6">
               <div className="space-y-6 pt-8 px-4">
                 <div className="h-2 w-24 bg-muted rounded-full mx-auto mb-8" />
                 <div className="space-y-2">

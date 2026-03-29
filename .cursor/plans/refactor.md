@@ -47,15 +47,15 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/components/community-baked-good-detail.tsx`
       Current `react-markdown` usage is generally safe without `rehype-raw`, but add an explicit sanitization policy as defense-in-depth (especially before any future raw HTML support).
 
-- [ ] **Splash page `**Bake Mode**` renders raw Markdown asterisks**
+- [x] **Splash page `**Bake Mode**` renders raw Markdown asterisks**
       `apps/web/src/components/splash-page.tsx` (line 131)
       The string `"Our signature **Bake Mode** is designed for..."` is in JSX, not a Markdown renderer — the asterisks render literally. Wrap "Bake Mode" in `<strong>` instead.
 
-- [ ] **Splash page `aspect-9/16` is not a default Tailwind class**
+- [x] **Splash page `aspect-9/16` is not a default Tailwind class**
       `apps/web/src/components/splash-page.tsx` (line 149)
       Tailwind CSS does not include `aspect-9/16` by default. This should be `aspect-[9/16]` (arbitrary value syntax) or defined in the Tailwind config. The Bake Mode phone mockup may not have the intended aspect ratio.
 
-- [ ] **Splash community CTA still shows when there are no community bakes**
+- [x] **Splash community CTA still shows when there are no community bakes**
       `apps/web/src/components/splash-community-showcase.tsx`
       The empty state message now exists, but "View All Community Bakes" still renders when the list is empty. Hide that CTA unless `communityBakedGoods.length > 0`.
 

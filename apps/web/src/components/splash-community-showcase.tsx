@@ -44,11 +44,13 @@ export function SplashCommunityShowcase() {
         )}
       </div>
 
-      <div className="mt-16 text-center">
-        <Button asChild variant="outline" size="lg" className="rounded-full px-8">
-          <Link href="/community">View All Community Bakes</Link>
-        </Button>
-      </div>
+      {communityBakedGoods && communityBakedGoods.length > 0 && (
+        <div className="mt-16 text-center">
+          <Button asChild variant="outline" size="lg" className="rounded-full px-8">
+            <Link href="/community">View All Community Bakes</Link>
+          </Button>
+        </div>
+      )}
     </>
   );
 }
