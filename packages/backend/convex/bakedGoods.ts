@@ -815,7 +815,7 @@ export const listCommunityBakedGoods = query({
         } else {
           const latestIteration = await ctx.db
             .query("recipeIterations")
-            .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", bg._id))
+            .withIndex("by_baked_good_bake_date", (q) => q.eq("bakedGoodId", bg._id))
             .order("desc")
             .first();
           if (latestIteration?.firstPhotoStorageId) {

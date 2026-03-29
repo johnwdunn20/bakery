@@ -22,7 +22,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/hooks/use-unsaved-changes-warning.ts`
       The hook globally overrides `history.pushState` and `history.replaceState` in its effect. If multiple forms mount simultaneously, the patches stack and are restored incorrectly on unmount (LIFO vs actual teardown order). More critically, this interacts poorly with Next.js App Router's internal use of the History API — potential for double prompts, swallowed navigations, or infinite loops. Consider a router-aware approach (e.g. `router.events` / `onBeforeRouteChange`) or a context-based solution instead.
 
-- [ ] **`listCommunityBakedGoods` fallback photo uses document order, not `bakeDate`**
+- [x] **`listCommunityBakedGoods` fallback photo uses document order, not `bakeDate`**
       `packages/backend/convex/bakedGoods.ts`
       When a baked good has no `coverPhotoStorageId`, the query fetches the "latest" iteration via `.order("desc").first()` on the `by_baked_good` index, which orders by Convex internal document ID (insertion order), not `bakeDate`. Elsewhere (e.g. `listMyBakedGoods`, `getCommunityBakedGoodWithIterations`), iterations are sorted by `bakeDate`. The community grid thumbnail may show a photo from the wrong iteration.
 
