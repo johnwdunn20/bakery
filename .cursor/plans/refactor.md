@@ -10,7 +10,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/baked-goods/[id]/page.tsx` (line 93)
       The branch moved `IterationCard` to module scope (good), but the thumbnail still uses a raw `<img>` tag. This was already flagged as an issue — the fix was applied elsewhere (community detail, cover photos) but missed here. The new iteration page photo preview (`iterations/new/page.tsx` line 408) has the same issue.
 
-- [ ] **`PublicBakedGoodDetail` is dead code with a broken fork button**
+- [x] **`PublicBakedGoodDetail` is dead code with a broken fork button**
       `apps/web/src/components/public-baked-good-detail.tsx`
       This component is never imported anywhere. Its "Fork Recipe" button has no `onClick` handler — clicking it does nothing. Either wire it into a route or delete it. The community detail page uses `CommunityBakedGoodDetail` instead, making this file orphaned.
 
