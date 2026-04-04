@@ -63,7 +63,7 @@ Issues ordered by priority. Each item includes the relevant file(s) and a brief 
       `apps/web/src/app/(info)/community/[id]/page.tsx`
       No `generateMetadata` export — every community recipe shares the same generic title/description. For SEO and link previews, generate metadata from the baked good name/description.
 
-- [ ] **Test coverage is minimal**
+- [x] **Test coverage is minimal**
       Tests were added for `format.ts`, `sort-iterations.ts`, `use-current-user.ts`, `constants.ts`, `bakedGoods.ts` (backend), and `seed.ts`. However, there's no coverage for the new `searchMyBakedGoods`, `listMyBakedGoodsPaginated`, `getPublicBakedGood`, `addIterationPhoto` order collision, or the `useUnsavedChangesWarning` hook. Auth guards, cascade deletes, and privacy enforcement still have minimal coverage.
 
 ---
