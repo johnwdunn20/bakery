@@ -19,7 +19,7 @@ export function BakersMathCalculator() {
   const calculatedIngredients = useMemo(() => {
     // Original ratios based on 500g flour
     const baseFlour = 500;
-    const factor = totalFlour / baseFlour;
+    const factor = totalFlour > 0 ? totalFlour / baseFlour : 0;
 
     const scaled = DEFAULT_INGREDIENTS.map((ing) => ({
       ...ing,
@@ -40,7 +40,7 @@ export function BakersMathCalculator() {
   }, [calculatedIngredients]);
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg border-primary/20 bg-background/50 backdrop-blur">
+    <Card className="w-full max-w-2xl mx-auto shadow-lg border-primary/20 bg-card">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
@@ -62,6 +62,7 @@ export function BakersMathCalculator() {
           <Input
             id="flour-input"
             type="number"
+            min={1}
             value={totalFlour}
             onChange={(e) => setTotalFlour(Number(e.target.value))}
             className="text-xl h-12"

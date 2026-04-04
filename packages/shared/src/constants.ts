@@ -4,4 +4,4 @@
 
 export const APP_NAME = "Bakery";
 
-// Add more constants as needed
+export const TIME_PRESETS = [30, 60, 90, 120, 180, 240] as const;

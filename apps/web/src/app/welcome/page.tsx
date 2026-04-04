@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Bakery — Stop Guessing. Start Perfecting.",
   description:
     "The professional-grade toolkit for home bakers. Store recipes, track every variation, calculate baker's percentages, and find ingredient substitutions instantly.",
+  alternates: {
+    canonical: "/welcome",
+  },
   openGraph: {
     title: "Bakery — Stop Guessing. Start Perfecting.",
     description:

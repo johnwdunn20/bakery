@@ -7,9 +7,7 @@ import type { Id } from "@bakery/backend/dataModel";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import ReactMarkdown from "react-markdown";
-import type { Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,47 +33,13 @@ import {
 import { ArrowLeft, Copy, Loader2, Pencil, Star, Trash2, X } from "lucide-react";
 import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 import { PhotoGrid } from "@/components/ui/photo-dropzone";
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatMinutes(min: number) {
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
-}
-
-const markdownComponents: Components = {
-  h1: ({ children }) => <h1 className="mt-6 mb-3 text-2xl font-bold first:mt-0">{children}</h1>,
-  h2: ({ children }) => <h2 className="mt-5 mb-2 text-xl font-bold">{children}</h2>,
-  h3: ({ children }) => <h3 className="mt-4 mb-2 text-lg font-semibold">{children}</h3>,
-  p: ({ children }) => <p className="mb-3 leading-relaxed last:mb-0">{children}</p>,
-  ul: ({ children }) => <ul className="mb-3 list-disc pl-6 space-y-1">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-3 list-decimal pl-6 space-y-1">{children}</ol>,
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-  code: ({ className, children, ...props }) => (
-    <code className={className ?? "rounded bg-muted px-1.5 py-0.5 font-mono text-sm"} {...props}>
-      {children}
-    </code>
-  ),
-  blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-muted-foreground/30 pl-4 italic text-muted-foreground">
-      {children}
-    </blockquote>
-  ),
-};
+import { formatDate, formatMinutes } from "@/lib/format";
 
 export default function IterationViewPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const iterationId = params.iterationId as string;
+  const id = typeof params.id === "string" ? params.id : undefined;
+  const iterationId = typeof params.iterationId === "string" ? params.iterationId : undefined;
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
   const deleteIteration = useMutation(api.bakedGoods.deleteIteration);
   const deleteIterationPhoto = useMutation(api.bakedGoods.deleteIterationPhoto);
@@ -86,6 +50,7 @@ export default function IterationViewPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
+  const [deletePhotoError, setDeletePhotoError] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const iteration = useQuery(
@@ -96,6 +61,20 @@ export default function IterationViewPage() {
     api.bakedGoods.getBakedGood,
     id ? { id: id as Id<"bakedGoods"> } : "skip"
   );
+
+  if (!id || !iterationId) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl">
+        <p className="text-muted-foreground">Page not found.</p>
+        <Button variant="link" asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to My Bakery
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (iteration === undefined) {
     return (
@@ -122,6 +101,7 @@ export default function IterationViewPage() {
   }
 
   const bakedGoodName = bakedGood && "name" in bakedGood ? bakedGood.name : "Baked good";
+  const photosWithUrls = iteration.photos?.filter((p) => p.url) ?? [];
 
   return (
     <div className="p-6 md:p-8 max-w-4xl space-y-6">
@@ -246,7 +226,8 @@ export default function IterationViewPage() {
           </span>
         )}
         <span>
-          {iteration.difficulty} · {formatMinutes(iteration.totalTime)}
+          {iteration.difficulty}
+          {iteration.totalTime != null && ` · ${formatMinutes(iteration.totalTime)}`}
         </span>
         {iteration.sourceUrl && (
           <a
@@ -275,8 +256,11 @@ export default function IterationViewPage() {
                     className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
                     onClick={() => {
                       if (photo.url) {
-                        setLightboxIndex(index);
-                        setLightboxOpen(true);
+                        const idx = photosWithUrls.findIndex((p) => p._id === photo._id);
+                        if (idx >= 0) {
+                          setLightboxIndex(idx);
+                          setLightboxOpen(true);
+                        }
                       }
                     }}
                   >
@@ -341,14 +325,10 @@ export default function IterationViewPage() {
       )}
 
       <PhotoLightbox
-        photos={
-          iteration.photos
-            ?.filter((p) => p.url)
-            .map((p, i) => ({
-              url: p.url!,
-              alt: `Photo ${i + 1} of ${bakedGoodName}`,
-            })) ?? []
-        }
+        photos={photosWithUrls.map((p, i) => ({
+          url: p.url!,
+          alt: `Photo ${i + 1} of ${bakedGoodName}`,
+        }))}
         initialIndex={lightboxIndex}
         open={lightboxOpen}
         onOpenChange={setLightboxOpen}
@@ -370,8 +350,13 @@ export default function IterationViewPage() {
               onClick={async () => {
                 if (!photoToDelete) return;
                 setDeletingPhotoId(photoToDelete);
+                setDeletePhotoError(null);
                 try {
                   await deleteIterationPhoto({ id: photoToDelete });
+                } catch (err) {
+                  setDeletePhotoError(
+                    err instanceof Error ? err.message : "Failed to delete photo."
+                  );
                 } finally {
                   setDeletingPhotoId(null);
                   setPhotoToDelete(null);
@@ -383,6 +368,8 @@ export default function IterationViewPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {deletePhotoError && <p className="text-sm text-destructive">{deletePhotoError}</p>}
 
       {iteration.notes && iteration.notes.trim() && (
         <Card>
@@ -401,9 +388,7 @@ export default function IterationViewPage() {
         </CardHeader>
         <CardContent>
           <div className="prose-recipe min-w-0">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {iteration.recipeContent}
-            </ReactMarkdown>
+            <MarkdownContent>{iteration.recipeContent}</MarkdownContent>
           </div>
         </CardContent>
       </Card>

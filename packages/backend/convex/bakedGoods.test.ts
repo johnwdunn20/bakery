@@ -237,6 +237,36 @@ describe("bakedGoods.createIteration", () => {
     expect(iterId).toBeDefined();
   });
 
+  it("creates an iteration without totalTime", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Test Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    const iterId = await asUser.mutation(api.bakedGoods.createIteration, {
+      bakedGoodId: bgId,
+      recipeContent: "Step 1: Mix. Step 2: Bake.",
+      difficulty: "Medium",
+      bakeDate: Date.now(),
+    });
+    expect(iterId).toBeDefined();
+
+    await t.run(async (ctx) => {
+      const iteration = await ctx.db.get(iterId);
+      expect(iteration!.totalTime).toBeUndefined();
+    });
+  });
+
   it("rejects a negative totalTime", async () => {
     const t = convexTest(schema, modules);
     const userId = await seedUser(t, "clerk_1", "baker");
@@ -406,7 +436,7 @@ describe("bakedGoods.getBakedGoodWithIterations", () => {
 // --- listCommunityBakedGoods ---
 
 describe("bakedGoods.listCommunityBakedGoods", () => {
-  it("returns baked goods without authentication", async () => {
+  it("returns only public baked goods without authentication", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -422,6 +452,7 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
       await ctx.db.insert("bakedGoods", {
         authorId: userId,
         name: "Community Bread",
+        isPublic: true,
         createdAt: now,
         updatedAt: now,
       });
@@ -430,6 +461,45 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
     const result = await t.query(api.bakedGoods.listCommunityBakedGoods);
     expect(result).toHaveLength(1);
     expect(result[0].authorName).toBe("Community Baker");
+  });
+
+  it("excludes non-public baked goods", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "private@test.com",
+        username: "privateBaker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Private Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Also Private",
+        isPublic: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Public Bread",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Public Bread");
   });
 
   it("limits to 12 results", async () => {
@@ -448,6 +518,7 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
         await ctx.db.insert("bakedGoods", {
           authorId: userId,
           name: `Bread ${i}`,
+          isPublic: true,
           createdAt: now,
           updatedAt: now,
         });
@@ -456,6 +527,85 @@ describe("bakedGoods.listCommunityBakedGoods", () => {
 
     const result = await t.query(api.bakedGoods.listCommunityBakedGoods);
     expect(result).toHaveLength(12);
+  });
+});
+
+// --- publishBakedGood ---
+
+describe("bakedGoods.publishBakedGood", () => {
+  it("throws when not authenticated", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    await expect(
+      t.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: true })
+    ).rejects.toThrow("Not authenticated");
+  });
+
+  it("throws when publishing another user's baked good", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    await seedUser(t, "clerk_2", "baker2");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "User1 Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser2 = t.withIdentity(identity("clerk_2", "baker2"));
+    await expect(
+      asUser2.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: true })
+    ).rejects.toThrow("not owned by you");
+  });
+
+  it("publishes and unpublishes a baked good", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Toggle Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+
+    // Initially not public — should not appear in community
+    let community = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(community).toHaveLength(0);
+
+    // Publish
+    await asUser.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: true });
+    community = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(community).toHaveLength(1);
+    expect(community[0].name).toBe("Toggle Bread");
+
+    // Unpublish
+    await asUser.mutation(api.bakedGoods.publishBakedGood, { id: bgId, isPublic: false });
+    community = await t.query(api.bakedGoods.listCommunityBakedGoods);
+    expect(community).toHaveLength(0);
   });
 });
 
@@ -472,5 +622,875 @@ describe("bakedGoods.createBakedGoodForSeed", () => {
       description: "From seed script",
     });
     expect(bgId).toBeDefined();
+  });
+
+  it("is idempotent for the same author and name", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    const id1 = await t.mutation(internal.bakedGoods.createBakedGoodForSeed, {
+      authorId: userId,
+      name: "Seeded Bread",
+    });
+    const id2 = await t.mutation(internal.bakedGoods.createBakedGoodForSeed, {
+      authorId: userId,
+      name: "Seeded Bread",
+    });
+    expect(id1).toEqual(id2);
+  });
+});
+
+// --- getCommunityBakedGoodWithIterations ---
+
+describe("bakedGoods.getCommunityBakedGoodWithIterations", () => {
+  it("returns null for non-public baked good", async () => {
+    const t = convexTest(schema, modules);
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "baker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Private Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.query(api.bakedGoods.getCommunityBakedGoodWithIterations, { id: bgId });
+    expect(result).toBeNull();
+  });
+
+  it("returns public baked good with iterations", async () => {
+    const t = convexTest(schema, modules);
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "baker",
+        name: "Test Baker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Community Bread",
+        description: "Shared recipe",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Mix and bake",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        rating: 4,
+        notes: "Good first try",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.query(api.bakedGoods.getCommunityBakedGoodWithIterations, { id: bgId });
+    expect(result).not.toBeNull();
+    expect(result!.name).toBe("Community Bread");
+    expect(result!.authorName).toBe("Test Baker");
+    expect(result!.iterations).toHaveLength(1);
+    expect(result!.iterations[0].recipeContent).toBe("Mix and bake");
+    expect(result!.avgRating).toBe(4);
+  });
+});
+
+// --- forkBakedGood ---
+
+describe("bakedGoods.forkBakedGood", () => {
+  it("throws when not authenticated", async () => {
+    const t = convexTest(schema, modules);
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "baker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Public Bread",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    await expect(t.mutation(api.bakedGoods.forkBakedGood, { id: bgId })).rejects.toThrow(
+      "Not authenticated"
+    );
+  });
+
+  it("throws for non-public baked good", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    await seedUser(t, "clerk_2", "baker2");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "Private Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser2 = t.withIdentity(identity("clerk_2", "baker2"));
+    await expect(asUser2.mutation(api.bakedGoods.forkBakedGood, { id: bgId })).rejects.toThrow(
+      "not public"
+    );
+  });
+
+  it("forks a public baked good with iterations", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    await seedUser(t, "clerk_2", "baker2");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "Public Bread",
+        description: "Great recipe",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Original recipe content",
+        difficulty: "Medium",
+        totalTime: 120,
+        bakeDate: now,
+        rating: 5,
+        notes: "Perfect",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser2 = t.withIdentity(identity("clerk_2", "baker2"));
+    const forkedId = await asUser2.mutation(api.bakedGoods.forkBakedGood, { id: bgId });
+    expect(forkedId).toBeDefined();
+    expect(forkedId).not.toEqual(bgId);
+
+    const forked = await asUser2.query(api.bakedGoods.getBakedGoodWithIterations, { id: forkedId });
+    expect(forked).not.toBeNull();
+    expect(forked!.name).toBe("Public Bread");
+    expect(forked!.description).toBe("Great recipe");
+    expect(forked!.iterations).toHaveLength(1);
+    expect(forked!.iterations[0].recipeContent).toBe("Original recipe content");
+  });
+
+  it("copies photo references when forking", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    await seedUser(t, "clerk_2", "baker2");
+
+    let bgId!: Id<"bakedGoods">;
+    let sourceIterationId!: Id<"recipeIterations">;
+    let coverStorageId!: Id<"_storage">;
+    let photoStorageId1!: Id<"_storage">;
+    let photoStorageId2!: Id<"_storage">;
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      coverStorageId = (await ctx.storage.store(new Blob(["cover"]))) as Id<"_storage">;
+      photoStorageId1 = (await ctx.storage.store(new Blob(["photo1"]))) as Id<"_storage">;
+      photoStorageId2 = (await ctx.storage.store(new Blob(["photo2"]))) as Id<"_storage">;
+
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "Photo Bread",
+        isPublic: true,
+        coverPhotoStorageId: coverStorageId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      sourceIterationId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe with photos",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        firstPhotoStorageId: photoStorageId1,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("iterationPhotos", {
+        iterationId: sourceIterationId,
+        storageId: photoStorageId1,
+        order: 0,
+        createdAt: now,
+      });
+      await ctx.db.insert("iterationPhotos", {
+        iterationId: sourceIterationId,
+        storageId: photoStorageId2,
+        order: 1,
+        createdAt: now,
+      });
+    });
+
+    const asUser2 = t.withIdentity(identity("clerk_2", "baker2"));
+    const forkedId = await asUser2.mutation(api.bakedGoods.forkBakedGood, { id: bgId });
+
+    await t.run(async (ctx) => {
+      const forkedBg = await ctx.db.get(forkedId);
+      expect(forkedBg).not.toBeNull();
+      expect(forkedBg!.coverPhotoStorageId).toEqual(coverStorageId);
+
+      const forkedIterations = await ctx.db
+        .query("recipeIterations")
+        .withIndex("by_baked_good", (q) => q.eq("bakedGoodId", forkedId))
+        .collect();
+      expect(forkedIterations).toHaveLength(1);
+      expect(forkedIterations[0].firstPhotoStorageId).toEqual(photoStorageId1);
+
+      const forkedPhotos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", forkedIterations[0]._id))
+        .collect();
+      expect(forkedPhotos).toHaveLength(2);
+      forkedPhotos.sort((a, b) => a.order - b.order);
+      expect(forkedPhotos[0].storageId).toEqual(photoStorageId1);
+      expect(forkedPhotos[0].order).toBe(0);
+      expect(forkedPhotos[1].storageId).toEqual(photoStorageId2);
+      expect(forkedPhotos[1].order).toBe(1);
+
+      // Forked photos should reference different iterationPhotos rows than the source
+      const sourcePhotos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", sourceIterationId))
+        .collect();
+      expect(sourcePhotos).toHaveLength(2);
+      const sourcePhotoIds = new Set(sourcePhotos.map((p) => p._id));
+      for (const fp of forkedPhotos) {
+        expect(sourcePhotoIds.has(fp._id)).toBe(false);
+      }
+    });
+  });
+});
+
+// --- searchMyBakedGoods ---
+
+describe("bakedGoods.searchMyBakedGoods", () => {
+  it("returns empty array when not authenticated", async () => {
+    const t = convexTest(schema, modules);
+    const result = await t.query(api.bakedGoods.searchMyBakedGoods, { query: "bread" });
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array when user record does not exist", async () => {
+    const t = convexTest(schema, modules);
+    const asGhost = t.withIdentity(identity("clerk_ghost", "ghost"));
+    const result = await asGhost.query(api.bakedGoods.searchMyBakedGoods, { query: "bread" });
+    expect(result).toEqual([]);
+  });
+
+  it("returns matching baked goods with _id and name", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Sourdough Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Banana Muffin",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    const results = await asUser.query(api.bakedGoods.searchMyBakedGoods, { query: "Sourdough" });
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results[0]).toHaveProperty("_id");
+    expect(results[0]).toHaveProperty("name");
+    expect(results.every((r: { name: string }) => r.name.includes("Sourdough"))).toBe(true);
+  });
+
+  it("is scoped to the calling user", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    const user2Id = await seedUser(t, "clerk_2", "baker2");
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "Rye Loaf",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: user2Id,
+        name: "Rye Bagel",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser1 = t.withIdentity(identity("clerk_1", "baker1"));
+    const results = await asUser1.query(api.bakedGoods.searchMyBakedGoods, { query: "Rye" });
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Rye Loaf");
+  });
+});
+
+// --- listMyBakedGoodsPaginated ---
+
+describe("bakedGoods.listMyBakedGoodsPaginated", () => {
+  it("returns empty page when not authenticated", async () => {
+    const t = convexTest(schema, modules);
+    const result = await t.query(api.bakedGoods.listMyBakedGoodsPaginated, {
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    expect(result).toEqual({ page: [], isDone: true, continueCursor: "" });
+  });
+
+  it("returns the user's baked goods in a paginated result", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread A",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread B",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    const result = await asUser.query(api.bakedGoods.listMyBakedGoodsPaginated, {
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    expect(result.page).toHaveLength(2);
+    expect(result.page[0]).toHaveProperty("_id");
+    expect(result.page[0]).toHaveProperty("name");
+    expect(result.isDone).toBe(true);
+  });
+
+  it("excludes another user's baked goods", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    const user2Id = await seedUser(t, "clerk_2", "baker2");
+
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "My Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("bakedGoods", {
+        authorId: user2Id,
+        name: "Their Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser1 = t.withIdentity(identity("clerk_1", "baker1"));
+    const result = await asUser1.query(api.bakedGoods.listMyBakedGoodsPaginated, {
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    expect(result.page).toHaveLength(1);
+    expect(result.page[0].name).toBe("My Bread");
+  });
+});
+
+// --- getPublicBakedGood ---
+
+describe("bakedGoods.getPublicBakedGood", () => {
+  it("returns null for a non-public baked good", async () => {
+    const t = convexTest(schema, modules);
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "baker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Private Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.query(api.bakedGoods.getPublicBakedGood, { id: bgId });
+    expect(result).toBeNull();
+  });
+
+  it("returns the baked good with authorName when public", async () => {
+    const t = convexTest(schema, modules);
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "baker",
+        name: "Jane Baker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Public Sourdough",
+        description: "My best recipe",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.query(api.bakedGoods.getPublicBakedGood, { id: bgId });
+    expect(result).not.toBeNull();
+    expect(result!.name).toBe("Public Sourdough");
+    expect(result!.authorName).toBe("Jane Baker");
+  });
+
+  it("falls back to username when author has no name", async () => {
+    const t = convexTest(schema, modules);
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "bakerUser",
+        createdAt: now,
+        updatedAt: now,
+      });
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.query(api.bakedGoods.getPublicBakedGood, { id: bgId });
+    expect(result).not.toBeNull();
+    expect(result!.authorName).toBe("bakerUser");
+  });
+
+  it("returns 'Unknown Baker' when author is deleted", async () => {
+    const t = convexTest(schema, modules);
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "baker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Orphan Bread",
+        isPublic: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.delete(userId);
+    });
+
+    const result = await t.query(api.bakedGoods.getPublicBakedGood, { id: bgId });
+    expect(result).not.toBeNull();
+    expect(result!.authorName).toBe("Unknown Baker");
+  });
+});
+
+// --- addIterationPhoto ---
+
+describe("bakedGoods.addIterationPhoto", () => {
+  it("throws when not authenticated", async () => {
+    const t = convexTest(schema, modules);
+
+    let iterId!: Id<"recipeIterations">;
+    let storageId!: Id<"_storage">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: "clerk_1",
+        email: "test@test.com",
+        username: "baker",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      storageId = (await ctx.storage.store(new Blob(["img"]))) as Id<"_storage">;
+    });
+
+    await expect(
+      t.mutation(api.bakedGoods.addIterationPhoto, { iterationId: iterId, storageId })
+    ).rejects.toThrow("Not authenticated");
+  });
+
+  it("throws when adding a photo to another user's iteration", async () => {
+    const t = convexTest(schema, modules);
+    const user1Id = await seedUser(t, "clerk_1", "baker1");
+    await seedUser(t, "clerk_2", "baker2");
+
+    let iterId!: Id<"recipeIterations">;
+    let storageId!: Id<"_storage">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const bgId = await ctx.db.insert("bakedGoods", {
+        authorId: user1Id,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      storageId = (await ctx.storage.store(new Blob(["img"]))) as Id<"_storage">;
+    });
+
+    const asUser2 = t.withIdentity(identity("clerk_2", "baker2"));
+    await expect(
+      asUser2.mutation(api.bakedGoods.addIterationPhoto, { iterationId: iterId, storageId })
+    ).rejects.toThrow("not owned by you");
+  });
+
+  it("auto-increments order when no order is given", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let iterId!: Id<"recipeIterations">;
+    let s1!: Id<"_storage">;
+    let s2!: Id<"_storage">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      s1 = (await ctx.storage.store(new Blob(["a"]))) as Id<"_storage">;
+      s2 = (await ctx.storage.store(new Blob(["b"]))) as Id<"_storage">;
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    const p1 = await asUser.mutation(api.bakedGoods.addIterationPhoto, {
+      iterationId: iterId,
+      storageId: s1,
+    });
+    const p2 = await asUser.mutation(api.bakedGoods.addIterationPhoto, {
+      iterationId: iterId,
+      storageId: s2,
+    });
+
+    await t.run(async (ctx) => {
+      const photo1 = await ctx.db.get(p1);
+      const photo2 = await ctx.db.get(p2);
+      expect(photo1!.order).toBe(0);
+      expect(photo2!.order).toBe(1);
+    });
+  });
+
+  it("resolves order collision by falling back to maxOrder + 1", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let iterId!: Id<"recipeIterations">;
+    let s1!: Id<"_storage">;
+    let s2!: Id<"_storage">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      s1 = (await ctx.storage.store(new Blob(["a"]))) as Id<"_storage">;
+      s2 = (await ctx.storage.store(new Blob(["b"]))) as Id<"_storage">;
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    await asUser.mutation(api.bakedGoods.addIterationPhoto, {
+      iterationId: iterId,
+      storageId: s1,
+    });
+    // Request order 0 which already exists — should resolve to 1
+    const p2 = await asUser.mutation(api.bakedGoods.addIterationPhoto, {
+      iterationId: iterId,
+      storageId: s2,
+      order: 0,
+    });
+
+    await t.run(async (ctx) => {
+      const photo2 = await ctx.db.get(p2);
+      expect(photo2!.order).toBe(1);
+    });
+  });
+
+  it("sets firstPhotoStorageId on the iteration for the first photo", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let iterId!: Id<"recipeIterations">;
+    let storageId!: Id<"_storage">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      storageId = (await ctx.storage.store(new Blob(["img"]))) as Id<"_storage">;
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    await asUser.mutation(api.bakedGoods.addIterationPhoto, {
+      iterationId: iterId,
+      storageId,
+    });
+
+    await t.run(async (ctx) => {
+      const iteration = await ctx.db.get(iterId);
+      expect(iteration!.firstPhotoStorageId).toEqual(storageId);
+    });
+  });
+
+  it("does not overwrite firstPhotoStorageId when iteration already has one", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let iterId!: Id<"recipeIterations">;
+    let s1!: Id<"_storage">;
+    let s2!: Id<"_storage">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      s1 = (await ctx.storage.store(new Blob(["a"]))) as Id<"_storage">;
+      s2 = (await ctx.storage.store(new Blob(["b"]))) as Id<"_storage">;
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        firstPhotoStorageId: s1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    await asUser.mutation(api.bakedGoods.addIterationPhoto, {
+      iterationId: iterId,
+      storageId: s2,
+    });
+
+    await t.run(async (ctx) => {
+      const iteration = await ctx.db.get(iterId);
+      expect(iteration!.firstPhotoStorageId).toEqual(s1);
+    });
+  });
+});
+
+// --- deleteIteration (cascade with photos) ---
+
+describe("bakedGoods.deleteIteration", () => {
+  it("cascades to delete iterationPhotos rows", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let iterId!: Id<"recipeIterations">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const s1 = await ctx.storage.store(new Blob(["a"]));
+      const s2 = await ctx.storage.store(new Blob(["b"]));
+      await ctx.db.insert("iterationPhotos", {
+        iterationId: iterId,
+        storageId: s1 as Id<"_storage">,
+        order: 0,
+        createdAt: now,
+      });
+      await ctx.db.insert("iterationPhotos", {
+        iterationId: iterId,
+        storageId: s2 as Id<"_storage">,
+        order: 1,
+        createdAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    await asUser.mutation(api.bakedGoods.deleteIteration, { id: iterId });
+
+    await t.run(async (ctx) => {
+      const photos = await ctx.db
+        .query("iterationPhotos")
+        .withIndex("by_iteration", (q) => q.eq("iterationId", iterId))
+        .collect();
+      expect(photos).toHaveLength(0);
+    });
+  });
+
+  it("clears coverPhotoStorageId when the cover photo is among deleted photos", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let bgId!: Id<"bakedGoods">;
+    let iterId!: Id<"recipeIterations">;
+    let coverStorage!: Id<"_storage">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      coverStorage = (await ctx.storage.store(new Blob(["cover"]))) as Id<"_storage">;
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Bread",
+        coverPhotoStorageId: coverStorage,
+        createdAt: now,
+        updatedAt: now,
+      });
+      iterId = await ctx.db.insert("recipeIterations", {
+        bakedGoodId: bgId,
+        recipeContent: "Recipe",
+        difficulty: "Easy",
+        totalTime: 60,
+        bakeDate: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("iterationPhotos", {
+        iterationId: iterId,
+        storageId: coverStorage,
+        order: 0,
+        createdAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    await asUser.mutation(api.bakedGoods.deleteIteration, { id: iterId });
+
+    await t.run(async (ctx) => {
+      const bg = await ctx.db.get(bgId);
+      expect(bg!.coverPhotoStorageId).toBeUndefined();
+    });
   });
 });

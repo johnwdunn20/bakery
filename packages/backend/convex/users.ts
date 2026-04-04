@@ -15,7 +15,7 @@ export const syncUser = mutation({
     }
 
     const clerkId = identity.subject;
-    const email = identity.email ?? "";
+    const email = identity.email;
     const username = identity.nickname;
 
     if (!username) {
@@ -103,7 +103,7 @@ export const syncUser = mutation({
     // Create new user
     const userId = await ctx.db.insert("users", {
       clerkId,
-      email,
+      ...(email ? { email } : {}),
       username,
       name: identity.name ?? undefined,
       imageUrl: identity.pictureUrl ?? undefined,
@@ -184,23 +184,5 @@ export const getCurrentUser = query({
       .unique();
 
     return user;
-  },
-});
-
-/**
- * Get a user by their Clerk ID.
- */
-export const getUserByClerkId = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    return await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
   },
 });

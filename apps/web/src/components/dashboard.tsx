@@ -146,7 +146,7 @@ export function Dashboard() {
             ))}
 
             <Link href="/baked-goods/new">
-              <Card className="overflow-hidden border-dashed hover:border-primary/50 transition-all cursor-pointer h-full min-h-[200px] sm:min-h-[320px] flex items-center justify-center">
+              <Card className="group overflow-hidden border-dashed hover:border-primary/50 transition-all cursor-pointer h-full min-h-[200px] sm:min-h-[320px] flex items-center justify-center">
                 <div className="text-center p-6">
                   <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <Plus className="h-6 w-6 text-primary" />

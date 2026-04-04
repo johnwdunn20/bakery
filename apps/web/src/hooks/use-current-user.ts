@@ -24,6 +24,12 @@ export function useCurrentUser() {
     }
   }, [isLoaded, isSignedIn, user, syncUser]);
 
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      hasSynced.current = false;
+    }
+  }, [isLoaded, isSignedIn]);
+
   return {
     user,
     isLoading: !isLoaded || (isSignedIn && user === undefined),

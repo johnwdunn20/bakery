@@ -6,6 +6,7 @@ import { api } from "@bakery/backend";
 import type { Id } from "@bakery/backend/dataModel";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -45,13 +46,16 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowDown,
   ArrowUp,
   CalendarClock,
   Camera,
   Copy,
-  Image,
+  Globe,
+  GlobeLock,
+  Image as ImageIcon,
   List,
   Loader2,
   Pencil,
@@ -60,63 +64,100 @@ import {
   Trash2,
 } from "lucide-react";
 import { CoverPhotoPicker } from "@/components/ui/cover-photo-picker";
+import { formatDate, formatMinutes } from "@/lib/format";
+import { sortIterations, SORT_LABELS, type SortOption } from "./sort-iterations";
 
 type ViewMode = "list" | "timeline";
-type SortOption = "date-desc" | "date-asc" | "rating-desc" | "rating-asc";
 
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+interface IterationCardProps {
+  it: {
+    _id: Id<"recipeIterations">;
+    bakeDate: number;
+    rating?: number;
+    difficulty: string;
+    totalTime?: number;
+    recipeContent: string;
+    notes?: string;
+    firstPhotoUrl: string | null;
+  };
+  bakedGoodId: string;
+  duplicatingId: Id<"recipeIterations"> | null;
+  onDuplicate: (id: Id<"recipeIterations">) => void;
 }
 
-function formatMinutes(min: number) {
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
-}
-
-const SORT_LABELS: Record<SortOption, string> = {
-  "date-desc": "Date (newest first)",
-  "date-asc": "Date (oldest first)",
-  "rating-desc": "Rating (best first)",
-  "rating-asc": "Rating (worst first)",
-};
-
-function sortIterations<T extends { bakeDate: number; rating?: number | null }>(
-  items: T[],
-  sort: SortOption
-): T[] {
-  const arr = [...items];
-  switch (sort) {
-    case "date-desc":
-      return arr.sort((a, b) => b.bakeDate - a.bakeDate);
-    case "date-asc":
-      return arr.sort((a, b) => a.bakeDate - b.bakeDate);
-    case "rating-desc":
-      return arr.sort((a, b) => {
-        const ra = a.rating ?? -1;
-        const rb = b.rating ?? -1;
-        return rb - ra;
-      });
-    case "rating-asc":
-      return arr.sort((a, b) => {
-        const ra = a.rating ?? 11;
-        const rb = b.rating ?? 11;
-        return ra - rb;
-      });
-    default:
-      return arr;
-  }
+function IterationCard({ it, bakedGoodId, duplicatingId, onDuplicate }: IterationCardProps) {
+  return (
+    <Card className="border bg-card transition-colors hover:bg-accent/50">
+      <CardContent className="p-4 flex items-start gap-3">
+        <div className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+          {it.firstPhotoUrl ? (
+            <Image
+              src={it.firstPhotoUrl}
+              alt={`Photo from ${formatDate(it.bakeDate)} bake`}
+              fill
+              className="object-cover"
+              sizes="80px"
+            />
+          ) : (
+            <ImageIcon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+          )}
+        </div>
+        <Link
+          href={`/baked-goods/${bakedGoodId}/iterations/${it._id}`}
+          className="flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+        >
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-medium">{formatDate(it.bakeDate)}</span>
+            {it.rating != null && (
+              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
+                {it.rating}/5
+              </span>
+            )}
+            <span className="text-muted-foreground">
+              {it.difficulty}
+              {it.totalTime != null && ` · ${formatMinutes(it.totalTime)}`}
+            </span>
+          </div>
+          {(it.recipeContent || it.notes) && (
+            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+              {it.notes?.trim() || it.recipeContent?.trim().split("\n")[0] || ""}
+            </p>
+          )}
+        </Link>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={duplicatingId !== null}
+              aria-label="Duplicate iteration"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will create a new iteration with today&apos;s date, copying the recipe content,
+                difficulty, and time. You can edit it before saving.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDuplicate(it._id)}>Duplicate</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function BakedGoodDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const id = typeof params.id === "string" ? params.id : undefined;
   const duplicateIteration = useMutation(api.bakedGoods.duplicateIteration);
   const updateBakedGood = useMutation(api.bakedGoods.updateBakedGood).withOptimisticUpdate(
     (localStore, args) => {
@@ -148,6 +189,20 @@ export default function BakedGoodDetailPage() {
       }
     }
   );
+  const publishBakedGood = useMutation(api.bakedGoods.publishBakedGood).withOptimisticUpdate(
+    (localStore, args) => {
+      const current = localStore.getQuery(api.bakedGoods.getBakedGoodWithIterations, {
+        id: args.id,
+      });
+      if (current) {
+        localStore.setQuery(
+          api.bakedGoods.getBakedGoodWithIterations,
+          { id: args.id },
+          { ...current, isPublic: args.isPublic }
+        );
+      }
+    }
+  );
   const [duplicatingId, setDuplicatingId] = useState<Id<"recipeIterations"> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
@@ -158,6 +213,7 @@ export default function BakedGoodDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const bakedGood = useQuery(
     api.bakedGoods.getBakedGoodWithIterations,
     id ? { id: id as Id<"bakedGoods"> } : "skip"
@@ -175,6 +231,17 @@ export default function BakedGoodDetailPage() {
       setUpdateError(null);
     }
   }, [bakedGood, isEditSheetOpen]);
+
+  if (!id) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl">
+        <p className="text-muted-foreground">Baked good not found.</p>
+        <Button variant="link" onClick={() => router.push("/")}>
+          Back to My Bakery
+        </Button>
+      </div>
+    );
+  }
 
   async function handleUpdateBakedGood() {
     if (!editName.trim()) {
@@ -199,11 +266,12 @@ export default function BakedGoodDetailPage() {
 
   async function handleDeleteBakedGood() {
     setIsDeleting(true);
+    setDeleteError(null);
     try {
       await deleteBakedGood({ id: id as Id<"bakedGoods"> });
       router.push("/");
     } catch (err) {
-      setUpdateError(err instanceof Error ? err.message : "Failed to delete.");
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete.");
       setIsDeleting(false);
     }
   }
@@ -233,82 +301,14 @@ export default function BakedGoodDetailPage() {
   const lastBakedDate = bakedGood.lastBakedDate ?? null;
   const hasIterations = sortedIterations.length > 0;
 
-  function IterationCard({ it }: { it: (typeof sortedIterations)[number] }) {
-    return (
-      <Card className="border bg-card transition-colors hover:bg-accent/50">
-        <CardContent className="p-4 flex items-start gap-3">
-          <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-            {"firstPhotoUrl" in it && it.firstPhotoUrl ? (
-              <img
-                src={it.firstPhotoUrl}
-                alt={`Photo from ${formatDate(it.bakeDate)} bake`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Image className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-            )}
-          </div>
-          <Link
-            href={`/baked-goods/${id}/iterations/${it._id}`}
-            className="flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
-          >
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-medium">{formatDate(it.bakeDate)}</span>
-              {it.rating != null && (
-                <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary font-medium">
-                  {it.rating}/5
-                </span>
-              )}
-              <span className="text-muted-foreground">
-                {it.difficulty} · {formatMinutes(it.totalTime)}
-              </span>
-            </div>
-            {(it.recipeContent || it.notes) && (
-              <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                {it.notes?.trim() || it.recipeContent?.trim().split("\n")[0] || ""}
-              </p>
-            )}
-          </Link>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={duplicatingId !== null}
-                aria-label="Duplicate iteration"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Duplicate iteration?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will create a new iteration with today's date, copying the recipe content,
-                  difficulty, and time. You can edit it before saving.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={async () => {
-                    setDuplicatingId(it._id);
-                    try {
-                      const newId = await duplicateIteration({ id: it._id });
-                      router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
-                    } finally {
-                      setDuplicatingId(null);
-                    }
-                  }}
-                >
-                  Duplicate
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
-    );
+  async function handleDuplicate(iterationId: Id<"recipeIterations">) {
+    setDuplicatingId(iterationId);
+    try {
+      const newId = await duplicateIteration({ id: iterationId });
+      router.push(`/baked-goods/${id}/iterations/${newId}/edit`);
+    } finally {
+      setDuplicatingId(null);
+    }
   }
 
   return (
@@ -336,108 +336,137 @@ export default function BakedGoodDetailPage() {
             {lastBakedDate != null && <> · Last baked {formatDate(lastBakedDate)}</>}
           </p>
         </div>
-        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Edit baked good">
-              <Pencil className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Edit Baked Good</SheetTitle>
-              <SheetDescription>
-                Update the name and description of this baked good.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
-                <Input
-                  id="edit-name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="e.g. Sourdough Bread"
-                  disabled={isUpdating || isDeleting}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Description (optional)</Label>
-                <textarea
-                  id="edit-description"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="A brief description..."
-                  disabled={isUpdating || isDeleting}
-                />
-              </div>
-              {updateError && <p className="text-sm text-destructive">{updateError}</p>}
-            </div>
-            <SheetFooter className="flex-col gap-2 sm:flex-col">
-              <Button
-                onClick={handleUpdateBakedGood}
-                disabled={isUpdating || isDeleting}
-                className="w-full"
-              >
-                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isUpdating ? "Saving..." : "Save changes"}
+        <div className="flex items-center gap-1">
+          <Button
+            variant={bakedGood.isPublic ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() =>
+              publishBakedGood({
+                id: id as Id<"bakedGoods">,
+                isPublic: !bakedGood.isPublic,
+              })
+            }
+            aria-label={bakedGood.isPublic ? "Unpublish from community" : "Share to community"}
+          >
+            {bakedGood.isPublic ? (
+              <>
+                <Globe className="mr-1.5 h-4 w-4" />
+                Published
+              </>
+            ) : (
+              <>
+                <GlobeLock className="mr-1.5 h-4 w-4" />
+                Share
+              </>
+            )}
+          </Button>
+          <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Edit baked good">
+                <Pencil className="h-4 w-4" />
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Edit Baked Good</SheetTitle>
+                <SheetDescription>
+                  Update the name and description of this baked good.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="e.g. Sourdough Bread"
                     disabled={isUpdating || isDeleting}
-                    className="w-full"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="mr-2 h-4 w-4" />
-                    )}
-                    {isDeleting ? "Deleting..." : "Delete Baked Good"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this baked good?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete &quot;{bakedGood.name}&quot; and all{" "}
-                      {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}. This
-                      action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={handleDeleteBakedGood}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    className="min-h-[80px]"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="A brief description..."
+                    disabled={isUpdating || isDeleting}
+                  />
+                </div>
+                {updateError && <p className="text-sm text-destructive">{updateError}</p>}
+              </div>
+              <SheetFooter className="flex-col gap-2 sm:flex-col">
+                <Button
+                  onClick={handleUpdateBakedGood}
+                  disabled={isUpdating || isDeleting}
+                  className="w-full"
+                >
+                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isUpdating ? "Saving..." : "Save changes"}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      disabled={isUpdating || isDeleting}
+                      className="w-full"
                     >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+                      {isDeleting ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-2 h-4 w-4" />
+                      )}
+                      {isDeleting ? "Deleting..." : "Delete Baked Good"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this baked good?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete &quot;{bakedGood.name}&quot; and all{" "}
+                        {iterationCount} {iterationCount === 1 ? "iteration" : "iterations"}. This
+                        action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={handleDeleteBakedGood}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
+
+      {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
 
       {hasIterations && (
         <>
           <div className="flex items-center gap-4">
-            <div className="shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+            <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
               {bakedGood.coverPhotoUrl ||
               sortedIterations.find((it) => it.firstPhotoUrl)?.firstPhotoUrl ? (
-                <img
+                <Image
                   src={
                     bakedGood.coverPhotoUrl ||
                     sortedIterations.find((it) => it.firstPhotoUrl)!.firstPhotoUrl!
                   }
                   alt={`Cover photo of ${bakedGood.name}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="96px"
                 />
               ) : (
-                <Image className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                <ImageIcon className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
               )}
             </div>
             <Button variant="outline" size="sm" onClick={() => setIsCoverPickerOpen(true)}>
@@ -561,7 +590,12 @@ export default function BakedGoodDetailPage() {
                 <ul className="space-y-3">
                   {sortedIterations.map((it) => (
                     <li key={it._id}>
-                      <IterationCard it={it} />
+                      <IterationCard
+                        it={it}
+                        bakedGoodId={id}
+                        duplicatingId={duplicatingId}
+                        onDuplicate={handleDuplicate}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -574,7 +608,12 @@ export default function BakedGoodDetailPage() {
                         aria-hidden
                       />
                       <div className="pt-0.5">
-                        <IterationCard it={it} />
+                        <IterationCard
+                          it={it}
+                          bakedGoodId={id}
+                          duplicatingId={duplicatingId}
+                          onDuplicate={handleDuplicate}
+                        />
                       </div>
                     </div>
                   ))}

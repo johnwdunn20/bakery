@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Ingredient Substitutions",
   description:
     "Never let a missing ingredient stop your bake. Search for common substitutions and alternatives for hundreds of baking ingredients.",
+  alternates: {
+    canonical: "/tools/substitutions",
+  },
   openGraph: {
     title: "Ingredient Substitutions | Bakery",
     description:

@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@bakery/backend";
 import { useClerk } from "@clerk/nextjs";
 import {
@@ -13,6 +14,8 @@ import {
   ChevronsUpDown,
   Home,
   CakeSlice,
+  Search,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -32,18 +35,63 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { useCurrentUser } from "@/hooks";
+import { useCurrentUser, useDebounce } from "@/hooks";
 
 export function AppSidebar() {
   const { user, isLoading: userLoading } = useCurrentUser();
-  const bakedGoods = useQuery(api.bakedGoods.listMyBakedGoods);
   const { signOut } = useClerk();
+
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+  const isSearching = debouncedSearch.trim().length > 0;
+
+  const {
+    results: paginatedResults,
+    status,
+    loadMore,
+  } = usePaginatedQuery(api.bakedGoods.listMyBakedGoodsPaginated, isSearching ? "skip" : {}, {
+    initialNumItems: 20,
+  });
+
+  const searchResults = useQuery(
+    api.bakedGoods.searchMyBakedGoods,
+    isSearching ? { query: debouncedSearch } : "skip"
+  );
+
+  const bakedGoods = isSearching ? searchResults : paginatedResults;
+  const isLoading = bakedGoods === undefined;
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const handleLoadMore = useCallback(() => {
+    if (!isSearching && status === "CanLoadMore") {
+      loadMore(20);
+    }
+  }, [isSearching, status, loadMore]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [handleLoadMore]);
 
   const displayName = user?.name || user?.username || "Baker";
   const initials = displayName
@@ -77,9 +125,20 @@ export function AppSidebar() {
         {/* My Baked Goods Section */}
         <SidebarGroup>
           <SidebarGroupLabel>My Baked Goods</SidebarGroupLabel>
+          <div className="px-2 pb-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <SidebarInput
+                placeholder="Search..."
+                className="pl-8"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {bakedGoods === undefined ? (
+              {isLoading ? (
                 <>
                   <SidebarMenuSkeleton showIcon />
                   <SidebarMenuSkeleton showIcon />
@@ -88,23 +147,35 @@ export function AppSidebar() {
               ) : bakedGoods.length === 0 ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link href="/baked-goods/new" className="text-muted-foreground italic">
-                      <Plus className="size-4" />
-                      <span>Create your first baked good</span>
-                    </Link>
+                    {isSearching ? (
+                      <span className="text-muted-foreground italic">No results</span>
+                    ) : (
+                      <Link href="/baked-goods/new" className="text-muted-foreground italic">
+                        <Plus className="size-4" />
+                        <span>Create your first baked good</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : (
-                bakedGoods.map((bg) => (
-                  <SidebarMenuItem key={bg._id}>
-                    <SidebarMenuButton asChild tooltip={bg.name}>
-                      <Link href={`/baked-goods/${bg._id}`}>
-                        <CakeSlice className="size-4" />
-                        <span>{bg.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
+                <>
+                  {bakedGoods.map((bg) => (
+                    <SidebarMenuItem key={bg._id}>
+                      <SidebarMenuButton asChild tooltip={bg.name}>
+                        <Link href={`/baked-goods/${bg._id}`}>
+                          <CakeSlice className="size-4" />
+                          <span>{bg.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                  {!isSearching && status === "LoadingMore" && (
+                    <div className="flex justify-center py-2">
+                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  <div ref={sentinelRef} className="h-px" />
+                </>
               )}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -162,7 +233,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Back to Home">
-                  <Link href="/">
+                  <Link href="/welcome">
                     <Home className="size-4" />
                     <span>Home</span>
                   </Link>
@@ -174,6 +245,11 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 px-3 pb-2 text-xs text-muted-foreground">
+          <Link href="/terms" className="hover:text-foreground transition-colors">
+            Terms
+          </Link>
+        </div>
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -201,9 +277,11 @@ export function AppSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem>
-                  <Settings className="mr-2 size-4" />
-                  Settings
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <Settings className="mr-2 size-4" />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>

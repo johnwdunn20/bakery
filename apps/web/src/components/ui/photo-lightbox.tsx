@@ -67,8 +67,7 @@ export function PhotoLightbox({
   if (!open || photos.length === 0) return null;
 
   const currentPhoto = photos[currentIndex];
-  const hasPrev = photos.length > 1;
-  const hasNext = photos.length > 1;
+  const showNav = photos.length > 1;
 
   function goToPrev() {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
@@ -130,7 +129,7 @@ export function PhotoLightbox({
         </div>
       )}
 
-      {hasPrev && (
+      {showNav && (
         <Button
           variant="ghost"
           size="icon"
@@ -154,10 +153,12 @@ export function PhotoLightbox({
           src={currentPhoto.url}
           alt={currentPhoto.alt || `Photo ${currentIndex + 1}`}
           className="max-w-full max-h-[90vh] object-contain rounded-lg"
+          loading="lazy"
+          decoding="async"
         />
       </div>
 
-      {hasNext && (
+      {showNav && (
         <Button
           variant="ghost"
           size="icon"
@@ -190,7 +191,13 @@ export function PhotoLightbox({
               aria-label={`View photo ${index + 1}`}
               aria-current={index === currentIndex ? "true" : undefined}
             >
-              <img src={photo.url} alt="" className="w-full h-full object-cover" />
+              <img
+                src={photo.url}
+                alt=""
+                className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
             </button>
           ))}
         </div>

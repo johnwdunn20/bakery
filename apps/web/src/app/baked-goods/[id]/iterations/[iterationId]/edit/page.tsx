@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -14,6 +14,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -53,35 +54,17 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ArrowLeft, CalendarIcon, Trash2, X, Loader2 } from "lucide-react";
-
-const TIME_PRESETS = [30, 60, 90, 120, 180, 240];
-
-function formatDateForInput(ts: number) {
-  return new Date(ts).toLocaleDateString("en-CA");
-}
-
-function formatMinutes(min: number) {
-  if (min < 60) return `${min}m`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+import { TIME_PRESETS } from "@bakery/shared/constants";
+import { useUnsavedChangesWarning } from "@/hooks";
+import { formatDate, formatMinutes, formatDateForInput } from "@/lib/format";
 
 type IterationFormData = z.infer<typeof iterationSchema>;
 
 export default function IterationEditPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
-  const iterationId = params.iterationId as string;
+  const id = typeof params.id === "string" ? params.id : undefined;
+  const iterationId = typeof params.iterationId === "string" ? params.iterationId : undefined;
   const iteration = useQuery(
     api.bakedGoods.getIteration,
     iterationId ? { id: iterationId as Id<"recipeIterations"> } : "skip"
@@ -97,7 +80,7 @@ export default function IterationEditPage() {
             ...current,
             ...(args.recipeContent !== undefined && { recipeContent: args.recipeContent }),
             ...(args.difficulty !== undefined && { difficulty: args.difficulty }),
-            ...(args.totalTime !== undefined && { totalTime: args.totalTime }),
+            totalTime: args.totalTime,
             ...(args.bakeDate !== undefined && { bakeDate: args.bakeDate }),
             ...(args.rating !== undefined && { rating: args.rating }),
             ...(args.notes !== undefined && { notes: args.notes }),
@@ -124,10 +107,12 @@ export default function IterationEditPage() {
     setValue,
     watch,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<IterationFormData>({
     resolver: zodResolver(iterationSchema) as Resolver<IterationFormData>,
   });
+
+  useUnsavedChangesWarning(isDirty);
 
   const bakeDate = watch("bakeDate");
   const [initialized, setInitialized] = useState(false);
@@ -136,6 +121,11 @@ export default function IterationEditPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<Id<"iterationPhotos"> | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<Id<"iterationPhotos"> | null>(null);
+  const nextOrderRef = useRef(0);
+
+  useEffect(() => {
+    nextOrderRef.current = iteration?.photos?.length ?? 0;
+  }, [iteration?.photos?.length]);
 
   useEffect(() => {
     if (iteration && !initialized) {
@@ -151,6 +141,20 @@ export default function IterationEditPage() {
       setInitialized(true);
     }
   }, [iteration, initialized, reset]);
+
+  if (!id || !iterationId) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl">
+        <p className="text-muted-foreground">Page not found.</p>
+        <Button variant="link" asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to My Bakery
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   async function onSubmit(data: IterationFormData) {
     setServerError(null);
@@ -175,7 +179,6 @@ export default function IterationEditPage() {
   async function handleFilesSelected(files: FileList) {
     setUploadError(null);
     setIsUploading(true);
-    const photoCount = iteration?.photos?.length ?? 0;
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -184,10 +187,12 @@ export default function IterationEditPage() {
         const response = await fetch(uploadUrl, { method: "POST", body: file });
         if (!response.ok) throw new Error("Upload failed");
         const { storageId } = (await response.json()) as { storageId: string };
+        const order = nextOrderRef.current;
+        nextOrderRef.current++;
         await addIterationPhoto({
           iterationId: iterationId as Id<"recipeIterations">,
           storageId: storageId as Id<"_storage">,
-          order: photoCount + i,
+          order,
         });
       }
     } catch (err) {
@@ -272,9 +277,9 @@ export default function IterationEditPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="recipeContent">Recipe content</Label>
-              <textarea
+              <Textarea
                 id="recipeContent"
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[120px]"
                 {...register("recipeContent")}
                 placeholder="Ingredients, steps, etc."
                 disabled={isSubmitting}
@@ -316,7 +321,7 @@ export default function IterationEditPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="totalTime">Total time (minutes)</Label>
+              <Label htmlFor="totalTime">Total time in minutes</Label>
               <Input
                 id="totalTime"
                 type="number"
@@ -387,7 +392,7 @@ export default function IterationEditPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>Rating (optional)</Label>
+              <Label>Rating</Label>
               <Controller
                 control={control}
                 name="rating"
@@ -401,17 +406,17 @@ export default function IterationEditPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
-              <textarea
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
                 id="notes"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[80px]"
                 {...register("notes")}
                 placeholder="How did it turn out?"
                 disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sourceUrl">Source URL (optional)</Label>
+              <Label htmlFor="sourceUrl">Source URL</Label>
               <Input
                 id="sourceUrl"
                 type="url"

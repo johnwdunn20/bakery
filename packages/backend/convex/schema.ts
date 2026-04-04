@@ -4,7 +4,7 @@ import { v } from "convex/values";
 export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
-    email: v.string(),
+    email: v.optional(v.string()),
     username: v.string(),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
@@ -20,15 +20,22 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     coverPhotoStorageId: v.optional(v.id("_storage")),
+    isPublic: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_author", ["authorId"]),
+  })
+    .index("by_author", ["authorId"])
+    .index("by_public", ["isPublic"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["authorId"],
+    }),
 
   recipeIterations: defineTable({
     bakedGoodId: v.id("bakedGoods"),
     recipeContent: v.string(),
     difficulty: v.string(),
-    totalTime: v.number(),
+    totalTime: v.optional(v.number()),
     bakeDate: v.number(),
     rating: v.optional(v.number()),
     notes: v.optional(v.string()),
