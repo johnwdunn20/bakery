@@ -169,10 +169,12 @@ export function CommunityBakedGoodDetail({ id }: { id: string }) {
                   </CardTitle>
                   <div className="flex flex-wrap items-center gap-3 text-sm">
                     <DifficultyBadge difficulty={iteration.difficulty} />
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{formatMinutes(iteration.totalTime)}</span>
-                    </div>
+                    {iteration.totalTime != null && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>{formatMinutes(iteration.totalTime)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
                       <span>{formatDate(iteration.bakeDate)}</span>

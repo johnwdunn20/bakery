@@ -35,7 +35,7 @@ export default defineSchema({
     bakedGoodId: v.id("bakedGoods"),
     recipeContent: v.string(),
     difficulty: v.string(),
-    totalTime: v.number(),
+    totalTime: v.optional(v.number()),
     bakeDate: v.number(),
     rating: v.optional(v.number()),
     notes: v.optional(v.string()),

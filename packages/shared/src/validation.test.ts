@@ -121,6 +121,12 @@ describe("iterationSchema", () => {
     expect(() => iterationSchema.parse({ ...validIteration, difficulty: "Expert" })).toThrow();
   });
 
+  it("accepts omitting totalTime", () => {
+    const { totalTime: _, ...withoutTime } = validIteration;
+    const result = iterationSchema.parse(withoutTime);
+    expect(result.totalTime).toBeUndefined();
+  });
+
   it("rejects totalTime less than 1", () => {
     expect(() => iterationSchema.parse({ ...validIteration, totalTime: 0 })).toThrow();
   });

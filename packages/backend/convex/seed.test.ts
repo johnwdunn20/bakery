@@ -67,7 +67,7 @@ describe("seed.run", () => {
     for (const it of iterations) {
       expect(it.recipeContent.length).toBeGreaterThan(50);
       expect(it.difficulty).toBeTruthy();
-      expect(it.totalTime).toBeGreaterThan(0);
+      expect(it.totalTime === undefined || it.totalTime > 0).toBe(true);
       expect(it.bakeDate).toBeGreaterThan(0);
     }
 

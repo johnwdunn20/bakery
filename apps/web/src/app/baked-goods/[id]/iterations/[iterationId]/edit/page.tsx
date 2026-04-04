@@ -80,7 +80,7 @@ export default function IterationEditPage() {
             ...current,
             ...(args.recipeContent !== undefined && { recipeContent: args.recipeContent }),
             ...(args.difficulty !== undefined && { difficulty: args.difficulty }),
-            ...(args.totalTime !== undefined && { totalTime: args.totalTime }),
+            totalTime: args.totalTime,
             ...(args.bakeDate !== undefined && { bakeDate: args.bakeDate }),
             ...(args.rating !== undefined && { rating: args.rating }),
             ...(args.notes !== undefined && { notes: args.notes }),
@@ -321,7 +321,7 @@ export default function IterationEditPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="totalTime">Total time (minutes)</Label>
+              <Label htmlFor="totalTime">Total time in minutes (optional)</Label>
               <Input
                 id="totalTime"
                 type="number"

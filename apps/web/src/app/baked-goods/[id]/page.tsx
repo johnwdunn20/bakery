@@ -75,7 +75,7 @@ interface IterationCardProps {
     bakeDate: number;
     rating?: number;
     difficulty: string;
-    totalTime: number;
+    totalTime?: number;
     recipeContent: string;
     notes?: string;
     firstPhotoUrl: string | null;
@@ -114,7 +114,8 @@ function IterationCard({ it, bakedGoodId, duplicatingId, onDuplicate }: Iteratio
               </span>
             )}
             <span className="text-muted-foreground">
-              {it.difficulty} · {formatMinutes(it.totalTime)}
+              {it.difficulty}
+              {it.totalTime != null && ` · ${formatMinutes(it.totalTime)}`}
             </span>
           </div>
           {(it.recipeContent || it.notes) && (

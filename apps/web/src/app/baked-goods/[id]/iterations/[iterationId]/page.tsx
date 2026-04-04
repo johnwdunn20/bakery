@@ -226,7 +226,8 @@ export default function IterationViewPage() {
           </span>
         )}
         <span>
-          {iteration.difficulty} · {formatMinutes(iteration.totalTime)}
+          {iteration.difficulty}
+          {iteration.totalTime != null && ` · ${formatMinutes(iteration.totalTime)}`}
         </span>
         {iteration.sourceUrl && (
           <a

@@ -14,8 +14,8 @@ function validateRating(rating: number | undefined) {
   }
 }
 
-function validateTotalTime(totalTime: number) {
-  if (totalTime < 0) throw new Error("Total time cannot be negative");
+function validateTotalTime(totalTime: number | undefined) {
+  if (totalTime !== undefined && totalTime < 0) throw new Error("Total time cannot be negative");
 }
 
 export const createBakedGood = mutation({
@@ -78,7 +78,7 @@ export const createIterationForSeed = internalMutation({
     bakedGoodId: v.id("bakedGoods"),
     recipeContent: v.string(),
     difficulty: v.string(),
-    totalTime: v.number(),
+    totalTime: v.optional(v.number()),
     bakeDate: v.number(),
     rating: v.optional(v.number()),
     notes: v.optional(v.string()),
@@ -640,7 +640,7 @@ export const createIteration = mutation({
     bakedGoodId: v.id("bakedGoods"),
     recipeContent: v.string(),
     difficulty: difficultyValidator,
-    totalTime: v.number(),
+    totalTime: v.optional(v.number()),
     bakeDate: v.number(),
     rating: v.optional(v.number()),
     notes: v.optional(v.string()),
@@ -713,7 +713,7 @@ export const updateIteration = mutation({
     await ctx.db.patch(args.id, {
       ...(args.recipeContent !== undefined && { recipeContent: args.recipeContent }),
       ...(args.difficulty !== undefined && { difficulty: args.difficulty }),
-      ...(args.totalTime !== undefined && { totalTime: args.totalTime }),
+      totalTime: args.totalTime,
       ...(args.bakeDate !== undefined && { bakeDate: args.bakeDate }),
       ...(args.rating !== undefined && { rating: args.rating }),
       ...(args.notes !== undefined && { notes: args.notes }),

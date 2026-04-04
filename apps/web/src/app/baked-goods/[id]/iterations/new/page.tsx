@@ -243,8 +243,8 @@ export default function NewIterationPage() {
         <CardHeader>
           <CardTitle>Add iteration</CardTitle>
           <CardDescription>
-            Record a bake of <strong>{bakedGood.name}</strong>. Recipe content, difficulty, total
-            time, and bake date are required.
+            Record a bake of <strong>{bakedGood.name}</strong>. Recipe content, difficulty, and bake
+            date are required.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -295,7 +295,7 @@ export default function NewIterationPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="totalTime">Total time (minutes)</Label>
+              <Label htmlFor="totalTime">Total time in minutes (optional)</Label>
               <Input
                 id="totalTime"
                 type="number"

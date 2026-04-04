@@ -237,6 +237,36 @@ describe("bakedGoods.createIteration", () => {
     expect(iterId).toBeDefined();
   });
 
+  it("creates an iteration without totalTime", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t, "clerk_1", "baker");
+
+    let bgId!: Id<"bakedGoods">;
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      bgId = await ctx.db.insert("bakedGoods", {
+        authorId: userId,
+        name: "Test Bread",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asUser = t.withIdentity(identity("clerk_1", "baker"));
+    const iterId = await asUser.mutation(api.bakedGoods.createIteration, {
+      bakedGoodId: bgId,
+      recipeContent: "Step 1: Mix. Step 2: Bake.",
+      difficulty: "Medium",
+      bakeDate: Date.now(),
+    });
+    expect(iterId).toBeDefined();
+
+    await t.run(async (ctx) => {
+      const iteration = await ctx.db.get(iterId);
+      expect(iteration!.totalTime).toBeUndefined();
+    });
+  });
+
   it("rejects a negative totalTime", async () => {
     const t = convexTest(schema, modules);
     const userId = await seedUser(t, "clerk_1", "baker");
