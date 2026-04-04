@@ -72,7 +72,7 @@ export default function NewBakedGoodPage() {
               {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 {...register("description")}

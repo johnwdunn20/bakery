@@ -295,7 +295,7 @@ export default function NewIterationPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="totalTime">Total time in minutes (optional)</Label>
+              <Label htmlFor="totalTime">Total time in minutes</Label>
               <Input
                 id="totalTime"
                 type="number"
@@ -366,7 +366,7 @@ export default function NewIterationPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>Rating (optional)</Label>
+              <Label>Rating</Label>
               <Controller
                 control={control}
                 name="rating"
@@ -380,7 +380,7 @@ export default function NewIterationPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
+              <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
                 className="min-h-[80px]"
@@ -390,7 +390,7 @@ export default function NewIterationPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sourceUrl">Source URL (optional)</Label>
+              <Label htmlFor="sourceUrl">Source URL</Label>
               <Input
                 id="sourceUrl"
                 type="url"
@@ -403,7 +403,7 @@ export default function NewIterationPage() {
               )}
             </div>
             <div className="space-y-3">
-              <Label>Photos (optional)</Label>
+              <Label>Photos</Label>
               {selectedFiles.length > 0 && (
                 <PhotoGrid>
                   {selectedFiles.map((sf, index) => (

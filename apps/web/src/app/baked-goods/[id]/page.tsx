@@ -385,7 +385,7 @@ export default function BakedGoodDetailPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-description">Description (optional)</Label>
+                  <Label htmlFor="edit-description">Description</Label>
                   <Textarea
                     id="edit-description"
                     className="min-h-[80px]"
