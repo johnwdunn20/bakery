@@ -429,6 +429,94 @@ export default function IterationEditPage() {
               )}
             </div>
             {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-base font-semibold">Photos</Label>
+                <p className="text-sm text-muted-foreground">
+                  Add or remove photos for this iteration.
+                </p>
+              </div>
+              {iteration.photos && iteration.photos.length > 0 && (
+                <PhotoGrid>
+                  {iteration.photos.map((photo) => (
+                    <div
+                      key={photo._id}
+                      className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
+                    >
+                      {photo.url ? (
+                        <Image
+                          src={photo.url}
+                          alt={`Photo of ${bakedGoodName}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                          Unavailable
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        disabled={deletingPhotoId !== null || isSubmitting}
+                        aria-label="Remove photo"
+                        onClick={() => setPhotoToDelete(photo._id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </PhotoGrid>
+              )}
+
+              <AlertDialog
+                open={photoToDelete !== null}
+                onOpenChange={(open) => !open && setPhotoToDelete(null)}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete photo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This photo will be permanently deleted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={async () => {
+                        if (!photoToDelete) return;
+                        setDeletingPhotoId(photoToDelete);
+                        try {
+                          await deleteIterationPhoto({ id: photoToDelete });
+                        } finally {
+                          setDeletingPhotoId(null);
+                          setPhotoToDelete(null);
+                        }
+                      }}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <div className="space-y-2">
+                <PhotoDropzone
+                  onFilesSelected={handleFilesSelected}
+                  disabled={isUploading || isSubmitting}
+                />
+                {isUploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Uploading photos...</span>
+                  </div>
+                )}
+                {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
+              </div>
+            </div>
           </CardContent>
           <CardFooter className="gap-2 pt-6">
             <Button type="submit" disabled={isSubmitting}>
@@ -439,95 +527,6 @@ export default function IterationEditPage() {
             </Button>
           </CardFooter>
         </form>
-      </Card>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Photos</CardTitle>
-          <CardDescription>Add or remove photos for this iteration.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {iteration.photos && iteration.photos.length > 0 && (
-            <PhotoGrid>
-              {iteration.photos.map((photo) => (
-                <div
-                  key={photo._id}
-                  className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
-                >
-                  {photo.url ? (
-                    <Image
-                      src={photo.url}
-                      alt={`Photo of ${bakedGoodName}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                      Unavailable
-                    </div>
-                  )}
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                    disabled={deletingPhotoId !== null || isSubmitting}
-                    aria-label="Remove photo"
-                    onClick={() => setPhotoToDelete(photo._id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </PhotoGrid>
-          )}
-
-          <AlertDialog
-            open={photoToDelete !== null}
-            onOpenChange={(open) => !open && setPhotoToDelete(null)}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete photo?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This photo will be permanently deleted.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={async () => {
-                    if (!photoToDelete) return;
-                    setDeletingPhotoId(photoToDelete);
-                    try {
-                      await deleteIterationPhoto({ id: photoToDelete });
-                    } finally {
-                      setDeletingPhotoId(null);
-                      setPhotoToDelete(null);
-                    }
-                  }}
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <div className="space-y-2">
-            <PhotoDropzone
-              onFilesSelected={handleFilesSelected}
-              disabled={isUploading || isSubmitting}
-            />
-            {isUploading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Uploading photos...</span>
-              </div>
-            )}
-            {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
-          </div>
-        </CardContent>
       </Card>
     </div>
   );
