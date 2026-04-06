@@ -5,8 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/welcome", "/tools/", "/terms", "/community"],
-        disallow: ["/", "/baked-goods/"],
+        allow: ["/"],
       },
     ],
     sitemap: "https://www.thebakery.app/sitemap.xml",
